@@ -162,9 +162,6 @@ const SettingsHomeScreen = ({ navigation }: Props) => {
         <Text style={{ fontWeight: '700', color: colors.text, marginBottom: 12 }}>Yasal</Text>
         <Pressable
           onPress={() => {
-            // GitHub Pages URL formatı: https://[username].github.io/[repository-name]/privacy-policy.html
-            // GitHub Pages'i aktifleştirdikten sonra [username] ve [repository-name] kısımlarını değiştirin
-            // Kurulum rehberi: docs/GITHUB_PAGES_SETUP.md
             const privacyPolicyUrl = 'https://enessevinc25.github.io/AlarmTR/privacy-policy.html';
             Linking.openURL(privacyPolicyUrl).catch(() => {
               Alert.alert('Hata', 'Gizlilik Politikası açılamadı. Lütfen daha sonra tekrar deneyin.');
@@ -182,9 +179,6 @@ const SettingsHomeScreen = ({ navigation }: Props) => {
         </Pressable>
         <Pressable
           onPress={() => {
-            // GitHub Pages URL formatı: https://[username].github.io/[repository-name]/terms-of-service.html
-            // GitHub Pages'i aktifleştirdikten sonra [username] ve [repository-name] kısımlarını değiştirin
-            // Kurulum rehberi: docs/GITHUB_PAGES_SETUP.md
             const termsUrl = 'https://enessevinc25.github.io/AlarmTR/terms-of-service.html';
             Linking.openURL(termsUrl).catch(() => {
               Alert.alert('Hata', 'Kullanım Şartları açılamadı. Lütfen daha sonra tekrar deneyin.');
