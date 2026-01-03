@@ -148,9 +148,11 @@ Bu dosya, production release için yapılan ve yapılacak tüm işlemlerin detay
 
 **Dosya**: `FIREBASE_GOOGLE_SETUP.md` içinde detaylı rehber mevcut
 
-- [ ] **Firestore Index Oluşturma**
-  - Collection: `alarmSessions`
-  - Fields: `userId` (Ascending), `deletedAt` (Ascending), `createdAt` (Descending)
+- [x] **Firestore Index Oluşturma** (Çoğu tamamlandı)
+  - ✅ `alarmSessions`: userId (asc), deletedAt (asc), createdAt (desc), __name__ (desc) - **Enabled**
+  - ✅ `userAlarmProfiles`: userId (asc), createdAt (desc), __name__ (desc) - **Enabled**
+  - ✅ `userSavedStops`: userId (asc), createdAt (desc), __name__ (desc) - **Enabled**
+  - ⏳ `userSavedStops`: userId (asc), stopId (asc) - **EKSİK!** (duplicate kontrolü için gerekli)
   - **Adımlar**: `FIREBASE_GOOGLE_SETUP.md` dosyasına bakın
   - **Süre**: ~5 dakika
   - **Öncelik**: Yüksek
@@ -212,24 +214,25 @@ Bu dosya, production release için yapılan ve yapılacak tüm işlemlerin detay
   - ✅ EXPO_PUBLIC_FIREBASE_PROJECT_ID
   - ✅ EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
   - ✅ EXPO_PUBLIC_FIREBASE_APP_ID
+  - ✅ EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET (yeni eklendi!)
 
 - [ ] **Eksik Firebase Config Secrets** (Eklenmeli)
-  - EXPO_PUBLIC_FIREBASE_API_KEY
-  - EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET
-  - **Komut**: `eas secret:create --scope project --name [NAME] --value [VALUE]`
-  - **Süre**: ~5 dakika
+  - ⏳ EXPO_PUBLIC_FIREBASE_API_KEY
+  - **Komut**: `eas secret:create --scope project --name EXPO_PUBLIC_FIREBASE_API_KEY --value [VALUE]`
+  - **Süre**: ~2 dakika
   - **Öncelik**: Yüksek
 
-- [ ] **Google Maps API Key Secrets**
-  - EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID
-  - EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS
+- [x] **Google Maps API Key Secrets** (Kısmen mevcut)
+  - ✅ EXPO_PUBLIC_GOOGLE_MAPS_API_KEY (genel key mevcut, fallback olarak kullanılabilir)
+  - ⏳ EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID (platform-specific önerilir)
+  - ⏳ EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS (platform-specific önerilir)
   - **Komut**: `eas secret:create --scope project --name [NAME] --value [VALUE]`
   - **Süre**: ~5 dakika
-  - **Öncelik**: Yüksek
+  - **Öncelik**: Yüksek (genel key mevcut ama platform-specific daha güvenli)
 
 - [ ] **Diğer Secrets** (Eksik)
-  - EXPO_PUBLIC_SENTRY_DSN
-  - EXPO_PUBLIC_ENVIRONMENT=production
+  - ⏳ EXPO_PUBLIC_SENTRY_DSN
+  - ⏳ EXPO_PUBLIC_ENVIRONMENT=production
   - **Komut**: `eas secret:create --scope project --name [NAME] --value [VALUE]`
   - **Süre**: ~5 dakika
   - **Öncelik**: Yüksek
