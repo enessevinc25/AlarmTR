@@ -476,12 +476,15 @@ Bu işlemler kod tarafında yapılamaz, kullanıcının manuel olarak yapması g
 
 ### Yapılan İşlemler
 - ✅ Tüm dokümanlar hazırlandı ve proje kök dizininde mevcut
-- ✅ Legal linkler Settings ekranına eklendi (placeholder URL'ler)
+- ✅ Legal linkler Settings ekranına eklendi (GitHub Pages URL'leri güncellendi)
+- ✅ GitHub Pages aktifleştirildi ve legal dokümanlar yayınlandı
 - ✅ Version ve build number artırıldı
 - ✅ Tüm rehberler ve checklist'ler hazır
 - ✅ TypeScript compile hataları düzeltildi (firestore.rules.test.ts)
-- ✅ EAS secrets durumu kontrol edildi (bazı Firebase secrets mevcut)
-- ✅ Kod tarafında placeholder ve TODO'lar tespit edildi
+- ✅ EAS secrets durumu kontrol edildi ve eas.json production profili güncellendi
+- ✅ Firebase index kontrolü yapıldı, eksik index tespit edildi (firestore.indexes.json güncellendi)
+- ✅ Kod tarafında placeholder ve TODO'lar temizlendi
+- ✅ E-posta placeholder'ları güncellendi (support@laststop.com)
 
 ### Yapılacak İşlemler
 - ⏳ Firebase Console işlemleri (`FIREBASE_GOOGLE_SETUP.md` rehberine bakın)
