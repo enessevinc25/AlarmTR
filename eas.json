@@ -1,0 +1,72 @@
+{
+  "cli": {
+    "version": ">= 7.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "development",
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "simulator": true
+      },
+      "env": {
+        "EXPO_PUBLIC_ENVIRONMENT": "development"
+      }
+    },
+    "standalone": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "simulator": true
+      },
+      "env": {
+        "EXPO_PUBLIC_ENVIRONMENT": "production"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "channel": "preview",
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "simulator": false
+      },
+      "env": {
+        "EXPO_PUBLIC_ENVIRONMENT": "staging"
+      }
+    },
+    "production": {
+      "distribution": "store",
+      "channel": "production",
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "ios": {
+        "simulator": false
+      },
+      "env": {
+        "EXPO_PUBLIC_ENVIRONMENT": "production",
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyCS75soGEExQaePqbblpEDIBaB43bePIDs",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "laststop-alarm-tr-38d76.firebasestorage.app",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID": "AIzaSyAVU7hqKkF7p3yHIFn_ykwJG2PTTIMyg2g",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS": "AIzaSyDsm7bYfryNWjJppXCYGHGvYBhFjcMXR0w"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {},
+      "ios": {
+        "ascAppId": "1234567890"
+      }
+    }
+  }
+}

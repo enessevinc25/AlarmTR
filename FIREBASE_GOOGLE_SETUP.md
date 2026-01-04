@@ -235,25 +235,46 @@ eas secret:view EXPO_PUBLIC_FIREBASE_API_KEY
 
 ### Secrets Ekleme (Eksikse)
 
+**Not**: `eas secret:create` komutu deprecated. Yeni komut `eas env:create` kullanılmalı.
+
+**Yöntem 1: Otomatik Script (Önerilen)**
+
+Proje kök dizininde `scripts/add-eas-secrets.ps1` scriptini çalıştırın:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/add-eas-secrets.ps1
+```
+
+Bu script tüm eksik secrets'ları otomatik olarak ekler.
+
+**Yöntem 2: Manuel Komutlar**
+
+Her secret için ayrı ayrı çalıştırın (interaktif prompt çıkacak):
+
 ```bash
 # Firebase Config
-eas secret:create --scope project --name EXPO_PUBLIC_FIREBASE_API_KEY --value "your-value"
-eas secret:create --scope project --name EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN --value "your-value"
-eas secret:create --scope project --name EXPO_PUBLIC_FIREBASE_PROJECT_ID --value "your-value"
-eas secret:create --scope project --name EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET --value "your-value"
-eas secret:create --scope project --name EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID --value "your-value"
-eas secret:create --scope project --name EXPO_PUBLIC_FIREBASE_APP_ID --value "your-value"
+npx eas env:create --scope project --name EXPO_PUBLIC_FIREBASE_API_KEY --value "your-value" --type string --visibility secret
+npx eas env:create --scope project --name EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET --value "your-value" --type string --visibility secret
 
 # Google Maps
-eas secret:create --scope project --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID --value "your-android-key"
-eas secret:create --scope project --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS --value "your-ios-key"
-
-# Sentry
-eas secret:create --scope project --name EXPO_PUBLIC_SENTRY_DSN --value "your-sentry-dsn"
+npx eas env:create --scope project --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID --value "your-android-key" --type string --visibility secret
+npx eas env:create --scope project --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS --value "your-ios-key" --type string --visibility secret
 
 # Environment
-eas secret:create --scope project --name EXPO_PUBLIC_ENVIRONMENT --value "production"
+npx eas env:create --scope project --name EXPO_PUBLIC_ENVIRONMENT --value "production" --type string --visibility secret
+
+# Sentry (Opsiyonel)
+npx eas env:create --scope project --name EXPO_PUBLIC_SENTRY_DSN --value "your-sentry-dsn" --type string --visibility secret
 ```
+
+**Yöntem 3: EAS Web UI**
+
+1. [Expo Dashboard](https://expo.dev/) açın
+2. Projenizi seçin
+3. **Secrets** sekmesine gidin
+4. **Create Secret** butonuna tıklayın
+5. Name ve Value girin
+6. **Create** butonuna tıklayın
 
 ---
 

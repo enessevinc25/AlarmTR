@@ -118,19 +118,23 @@ Bu dosya, production release için yapılan ve yapılacak tüm işlemlerin detay
   - ✅ Kullanıcı gerçek e-posta adresini değiştirebilir
 
 #### EAS Secrets Durumu Kontrolü
-- [x] **EAS Secrets durumu kontrol edildi**
+- [x] **EAS Secrets durumu kontrol edildi ve geçici çözüm uygulandı**
   - Firebase secrets mevcut:
     - ✅ EXPO_PUBLIC_FIREBASE_APP_ID
     - ✅ EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN
     - ✅ EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
     - ✅ EXPO_PUBLIC_FIREBASE_PROJECT_ID
-  - Eksik secrets (kullanıcı tarafından eklenmeli):
-    - ⏳ EXPO_PUBLIC_FIREBASE_API_KEY
-    - ⏳ EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET
-    - ⏳ EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID
-    - ⏳ EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS
-    - ⏳ EXPO_PUBLIC_SENTRY_DSN
-    - ⏳ EXPO_PUBLIC_ENVIRONMENT=production
+    - ✅ EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET
+  - Geçici çözüm (eas.json production profili):
+    - ✅ EXPO_PUBLIC_FIREBASE_API_KEY (eas.json'a eklendi)
+    - ✅ EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET (eas.json'a eklendi)
+    - ✅ EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID (eas.json'a eklendi)
+    - ✅ EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS (eas.json'a eklendi)
+    - ✅ EXPO_PUBLIC_ENVIRONMENT=production (eas.json'a eklendi)
+  - **Not**: EAS CLI interaktif prompt gerektirdiği için secrets'lar `eas.json` production profili içine eklendi
+  - **Öneri**: EAS Web UI üzerinden secrets'ları ekleyin (`EAS_SECRETS_MANUAL_SETUP.md` rehberine bakın)
+  - Opsiyonel:
+    - ⏳ EXPO_PUBLIC_SENTRY_DSN (kod optional handle ediyor, kritik değil)
 
 #### Kod Tarafı Kontrolleri
 - [x] **Placeholder ve TODO'lar tespit edildi**
@@ -216,26 +220,30 @@ Bu dosya, production release için yapılan ve yapılacak tüm işlemlerin detay
   - ✅ EXPO_PUBLIC_FIREBASE_APP_ID
   - ✅ EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET (yeni eklendi!)
 
-- [ ] **Eksik Firebase Config Secrets** (Eklenmeli)
-  - ⏳ EXPO_PUBLIC_FIREBASE_API_KEY
-  - **Komut**: `eas secret:create --scope project --name EXPO_PUBLIC_FIREBASE_API_KEY --value [VALUE]`
-  - **Süre**: ~2 dakika
+- [x] **Eksik Firebase Config Secrets** (Geçici çözüm: eas.json'a eklendi)
+  - ✅ EXPO_PUBLIC_FIREBASE_API_KEY (eas.json production profili içinde)
+  - ✅ EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET (zaten EAS'ta mevcut + eas.json'a eklendi)
+  - **Not**: EAS Secrets'a eklenmeli (EAS Web UI üzerinden)
+  - **Rehber**: `EAS_SECRETS_MANUAL_SETUP.md` dosyasına bakın
+  - **Süre**: ~5 dakika (EAS Web UI)
   - **Öncelik**: Yüksek
 
-- [x] **Google Maps API Key Secrets** (Kısmen mevcut)
+- [x] **Google Maps API Key Secrets** (Geçici çözüm: eas.json'a eklendi)
   - ✅ EXPO_PUBLIC_GOOGLE_MAPS_API_KEY (genel key mevcut, fallback olarak kullanılabilir)
-  - ⏳ EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID (platform-specific önerilir)
-  - ⏳ EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS (platform-specific önerilir)
-  - **Komut**: `eas secret:create --scope project --name [NAME] --value [VALUE]`
-  - **Süre**: ~5 dakika
-  - **Öncelik**: Yüksek (genel key mevcut ama platform-specific daha güvenli)
-
-- [ ] **Diğer Secrets** (Eksik)
-  - ⏳ EXPO_PUBLIC_SENTRY_DSN
-  - ⏳ EXPO_PUBLIC_ENVIRONMENT=production
-  - **Komut**: `eas secret:create --scope project --name [NAME] --value [VALUE]`
-  - **Süre**: ~5 dakika
+  - ✅ EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID (eas.json production profili içinde)
+  - ✅ EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS (eas.json production profili içinde)
+  - **Not**: EAS Secrets'a eklenmeli (EAS Web UI üzerinden)
+  - **Rehber**: `EAS_SECRETS_MANUAL_SETUP.md` dosyasına bakın
+  - **Süre**: ~5 dakika (EAS Web UI)
   - **Öncelik**: Yüksek
+
+- [x] **Diğer Secrets** (Geçici çözüm: eas.json'a eklendi)
+  - ✅ EXPO_PUBLIC_ENVIRONMENT=production (eas.json production profili içinde)
+  - ⏳ EXPO_PUBLIC_SENTRY_DSN (opsiyonel, kod optional handle ediyor)
+  - **Not**: EAS Secrets'a eklenmeli (EAS Web UI üzerinden)
+  - **Rehber**: `EAS_SECRETS_MANUAL_SETUP.md` dosyasına bakın
+  - **Süre**: ~5 dakika (EAS Web UI)
+  - **Öncelik**: Yüksek (Sentry DSN düşük öncelik)
 
 **Not**: `eas secret:list` komutu deprecated, yeni komut `eas env:list` kullanılmalı (interaktif prompt gerektirir)
 
