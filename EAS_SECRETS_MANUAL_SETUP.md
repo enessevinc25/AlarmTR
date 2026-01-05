@@ -2,6 +2,8 @@
 
 EAS CLI komutları interaktif prompt gerektirdiği için, secrets'ları EAS Web UI üzerinden eklemeniz gerekiyor.
 
+**Güncelleme**: Secrets'lar zaten EAS'ta mevcut! Sadece `EXPO_PUBLIC_ENVIRONMENT` için visibility düzeltildi (plaintext olmalı).
+
 ## 🔐 Eklenecek Secrets
 
 Aşağıdaki secrets'ları [Expo Dashboard](https://expo.dev/) üzerinden ekleyin:
@@ -34,7 +36,7 @@ Aşağıdaki secrets'ları [Expo Dashboard](https://expo.dev/) üzerinden ekleyi
 - **Name**: `EXPO_PUBLIC_ENVIRONMENT`
 - **Value**: `production`
 - **Type**: String
-- **Visibility**: Secret
+- **Visibility**: Plaintext (EXPO_PUBLIC_ prefix'li değişkenler secret olamaz)
 
 ## 📋 Adımlar
 

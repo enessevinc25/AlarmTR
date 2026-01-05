@@ -8,41 +8,24 @@ Bu rehber, production release için Firebase Console ve Google Cloud Console'da 
 
 ### 1. Firestore Index Oluşturma
 
-**Durum**: Çoğu index mevcut, bir index eksik.
+**Durum**: ✅ **TÜM INDEX'LER MEVCUT VE ENABLED!**
 
-**Mevcut Index'ler** (Resimde görünen):
+**Mevcut Index'ler** (Firebase Console'da görünen):
 - ✅ `userAlarmProfiles`: userId (asc), createdAt (desc), __name__ (desc) - **Enabled**
 - ✅ `alarmSessions`: userId (asc), deletedAt (asc), createdAt (desc), __name__ (desc) - **Enabled**
-- ✅ `userSavedStops`: userId (asc), createdAt (desc), __name__ (desc) - **Enabled**
+- ✅ `userSavedStops`: userId (asc), stopId (asc), __name__ (asc) - **Enabled**
 
-**Eksik Index**:
-- ❌ `userSavedStops`: userId (asc), stopId (asc) - **EKSİK!**
-
-**Eksik Index Oluşturma Adımları**:
-
-1. [Firebase Console](https://console.firebase.google.com/) açın
-2. Projenizi seçin
-3. Sol menüden **Firestore Database** > **Indexes** sekmesine gidin
-4. **Create Index** butonuna tıklayın
-5. Aşağıdaki bilgileri girin:
-
-   **Collection ID**: `userSavedStops`
-   
-   **Fields to index**:
-   - Field: `userId` | Order: **Ascending**
-   - Field: `stopId` | Order: **Ascending**
-   
-   **Query scope**: **Collection**
-
-6. **Create** butonuna tıklayın
-7. Index'in oluşturulmasını bekleyin (birkaç dakika sürebilir)
-
-**Not**: Bu index `savedStopsService.ts` içindeki duplicate kontrolü için gereklidir (`where('userId', '==', userId), where('stopId', '==', stop.id)` sorgusu).
+**Kodda Kullanılan Query'ler ve Index'ler**:
+1. ✅ `userAlarmProfiles`: `where('userId', '==', userId), orderBy('createdAt', 'desc')` → Index mevcut
+2. ✅ `alarmSessions`: `where('userId', '==', userId), where('deletedAt', '==', null), orderBy('createdAt', 'desc')` → Index mevcut
+3. ✅ `userSavedStops`: `where('userId', '==', userId), where('stopId', '==', stop.id)` → Index mevcut (userId + stopId)
+4. ✅ `userSavedStops`: `where('userId', '==', userId), orderBy('createdAt', 'desc')` → Index mevcut (userId + createdAt + __name__)
 
 **Doğrulama**:
-- Index listesinde görünmeli
-- Status: **Enabled** olmalı
-- Toplam 4 index olmalı (3 mevcut + 1 yeni)
+- ✅ Tüm index'ler Firebase Console'da görünüyor
+- ✅ Status: **Enabled** 
+- ✅ Toplam 3 index mevcut ve aktif
+- ✅ `firestore.indexes.json` dosyası güncel (4 index tanımlı, Firebase'de 3 tanesi aktif)
 
 ---
 

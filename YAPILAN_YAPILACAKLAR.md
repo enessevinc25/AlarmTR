@@ -118,21 +118,22 @@ Bu dosya, production release için yapılan ve yapılacak tüm işlemlerin detay
   - ✅ Kullanıcı gerçek e-posta adresini değiştirebilir
 
 #### EAS Secrets Durumu Kontrolü
-- [x] **EAS Secrets durumu kontrol edildi ve geçici çözüm uygulandı**
+- [x] **EAS Secrets durumu kontrol edildi - TÜM SECRETS MEVCUT! ✅**
   - Firebase secrets mevcut:
     - ✅ EXPO_PUBLIC_FIREBASE_APP_ID
     - ✅ EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN
     - ✅ EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
     - ✅ EXPO_PUBLIC_FIREBASE_PROJECT_ID
     - ✅ EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET
-  - Geçici çözüm (eas.json production profili):
-    - ✅ EXPO_PUBLIC_FIREBASE_API_KEY (eas.json'a eklendi)
-    - ✅ EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET (eas.json'a eklendi)
-    - ✅ EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID (eas.json'a eklendi)
-    - ✅ EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS (eas.json'a eklendi)
-    - ✅ EXPO_PUBLIC_ENVIRONMENT=production (eas.json'a eklendi)
-  - **Not**: EAS CLI interaktif prompt gerektirdiği için secrets'lar `eas.json` production profili içine eklendi
-  - **Öneri**: EAS Web UI üzerinden secrets'ları ekleyin (`EAS_SECRETS_MANUAL_SETUP.md` rehberine bakın)
+    - ✅ EXPO_PUBLIC_FIREBASE_API_KEY (EAS'ta mevcut)
+  - Google Maps secrets mevcut:
+    - ✅ EXPO_PUBLIC_GOOGLE_MAPS_API_KEY (genel key mevcut)
+    - ✅ EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID (EAS'ta mevcut)
+    - ✅ EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS (EAS'ta mevcut)
+  - Diğer secrets:
+    - ✅ EXPO_PUBLIC_ENVIRONMENT=production (EAS'ta mevcut, visibility plaintext olarak düzeltildi)
+  - **Durum**: Tüm kritik secrets EAS'ta mevcut ve production build'ler için hazır
+  - **Not**: `eas.json` production profili içinde de secrets'lar var (backup olarak)
   - Opsiyonel:
     - ⏳ EXPO_PUBLIC_SENTRY_DSN (kod optional handle ediyor, kritik değil)
 
@@ -220,30 +221,24 @@ Bu dosya, production release için yapılan ve yapılacak tüm işlemlerin detay
   - ✅ EXPO_PUBLIC_FIREBASE_APP_ID
   - ✅ EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET (yeni eklendi!)
 
-- [x] **Eksik Firebase Config Secrets** (Geçici çözüm: eas.json'a eklendi)
-  - ✅ EXPO_PUBLIC_FIREBASE_API_KEY (eas.json production profili içinde)
-  - ✅ EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET (zaten EAS'ta mevcut + eas.json'a eklendi)
-  - **Not**: EAS Secrets'a eklenmeli (EAS Web UI üzerinden)
-  - **Rehber**: `EAS_SECRETS_MANUAL_SETUP.md` dosyasına bakın
-  - **Süre**: ~5 dakika (EAS Web UI)
-  - **Öncelik**: Yüksek
+- [x] **Eksik Firebase Config Secrets** (✅ EAS'ta mevcut + eas.json'a eklendi)
+  - ✅ EXPO_PUBLIC_FIREBASE_API_KEY (EAS'ta mevcut + eas.json production profili içinde)
+  - ✅ EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET (EAS'ta mevcut + eas.json'a eklendi)
+  - **Durum**: Tüm secrets EAS'ta mevcut, production build'ler için hazır
+  - **Öncelik**: ✅ Tamamlandı
 
-- [x] **Google Maps API Key Secrets** (Geçici çözüm: eas.json'a eklendi)
+- [x] **Google Maps API Key Secrets** (✅ EAS'ta mevcut + eas.json'a eklendi)
   - ✅ EXPO_PUBLIC_GOOGLE_MAPS_API_KEY (genel key mevcut, fallback olarak kullanılabilir)
-  - ✅ EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID (eas.json production profili içinde)
-  - ✅ EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS (eas.json production profili içinde)
-  - **Not**: EAS Secrets'a eklenmeli (EAS Web UI üzerinden)
-  - **Rehber**: `EAS_SECRETS_MANUAL_SETUP.md` dosyasına bakın
-  - **Süre**: ~5 dakika (EAS Web UI)
-  - **Öncelik**: Yüksek
+  - ✅ EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID (EAS'ta mevcut + eas.json production profili içinde)
+  - ✅ EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS (EAS'ta mevcut + eas.json production profili içinde)
+  - **Durum**: Tüm secrets EAS'ta mevcut, production build'ler için hazır
+  - **Öncelik**: ✅ Tamamlandı
 
-- [x] **Diğer Secrets** (Geçici çözüm: eas.json'a eklendi)
-  - ✅ EXPO_PUBLIC_ENVIRONMENT=production (eas.json production profili içinde)
+- [x] **Diğer Secrets** (✅ EAS'ta mevcut + eas.json'a eklendi)
+  - ✅ EXPO_PUBLIC_ENVIRONMENT=production (EAS'ta mevcut + eas.json production profili içinde, visibility plaintext olarak düzeltildi)
   - ⏳ EXPO_PUBLIC_SENTRY_DSN (opsiyonel, kod optional handle ediyor)
-  - **Not**: EAS Secrets'a eklenmeli (EAS Web UI üzerinden)
-  - **Rehber**: `EAS_SECRETS_MANUAL_SETUP.md` dosyasına bakın
-  - **Süre**: ~5 dakika (EAS Web UI)
-  - **Öncelik**: Yüksek (Sentry DSN düşük öncelik)
+  - **Durum**: Tüm kritik secrets EAS'ta mevcut
+  - **Öncelik**: ✅ Tamamlandı (Sentry DSN düşük öncelik)
 
 **Not**: `eas secret:list` komutu deprecated, yeni komut `eas env:list` kullanılmalı (interaktif prompt gerektirir)
 
@@ -454,7 +449,7 @@ Bu işlemler kod tarafında yapılamaz, kullanıcının manuel olarak yapması g
 
 ## 📊 İlerleme Durumu
 
-**Genel Tamamlanma**: ~%90
+**Genel Tamamlanma**: ~%92
 
 ### Tamamlanan Kategoriler
 - ✅ Kod Hazırlığı: %95 (TypeScript hataları düzeltildi)
@@ -466,7 +461,7 @@ Bu işlemler kod tarafında yapılamaz, kullanıcının manuel olarak yapması g
 
 ### Eksik Kategoriler
 - ⏳ Store Hazırlığı: %40 (assets eksik)
-- ⏳ Firebase/Google Setup: %85 (secrets eas.json'a eklendi, eksik index var)
+- ✅ Firebase/Google Setup: %95 (secrets EAS'ta mevcut, tüm index'ler aktif)
 - ⏳ Production Build: %50 (test eksik)
 - ⏳ Store Submission: %0 (henüz başlanmadı)
 
