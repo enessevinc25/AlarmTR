@@ -2,7 +2,7 @@
 
 Bu dosya, production release için yapılan ve yapılacak tüm işlemlerin detaylı takibini içerir.
 
-**Son Güncelleme**: 2024-12-18 (Otomatik güncelleme: EAS secrets eas.json'a eklendi, Firebase index kontrolü yapıldı, eksik index tespit edildi)  
+**Son Güncelleme**: 2024-12-18 (Otomatik güncelleme: EAS secrets doğrulandı - TÜM SECRETS MEVCUT, Firebase index'ler kontrol edildi - TÜM INDEX'LER ENABLED, EXPO_PUBLIC_ENVIRONMENT eklendi)  
 **Mevcut Versiyon**: 1.1.0
 
 ---
@@ -153,14 +153,13 @@ Bu dosya, production release için yapılan ve yapılacak tüm işlemlerin detay
 
 **Dosya**: `FIREBASE_GOOGLE_SETUP.md` içinde detaylı rehber mevcut
 
-- [x] **Firestore Index Oluşturma** (Çoğu tamamlandı)
+- [x] **Firestore Index Oluşturma** (✅ TÜM INDEX'LER MEVCUT VE ENABLED!)
   - ✅ `alarmSessions`: userId (asc), deletedAt (asc), createdAt (desc), __name__ (desc) - **Enabled**
   - ✅ `userAlarmProfiles`: userId (asc), createdAt (desc), __name__ (desc) - **Enabled**
-  - ✅ `userSavedStops`: userId (asc), createdAt (desc), __name__ (desc) - **Enabled**
-  - ⏳ `userSavedStops`: userId (asc), stopId (asc) - **EKSİK!** (duplicate kontrolü için gerekli)
-  - **Adımlar**: `FIREBASE_GOOGLE_SETUP.md` dosyasına bakın
-  - **Süre**: ~5 dakika
-  - **Öncelik**: Yüksek
+  - ✅ `userSavedStops`: userId (asc), stopId (asc), __name__ (asc) - **Enabled** (duplicate kontrolü için)
+  - ✅ `userSavedStops`: userId (asc), createdAt (desc), __name__ (desc) - **Enabled** (liste sıralama için)
+  - **Durum**: Tüm gerekli index'ler Firebase Console'da mevcut ve aktif
+  - **Öncelik**: ✅ Tamamlandı
 
 - [ ] **Firestore Security Rules Deploy**
   - `firestore.rules` dosyasını Firebase Console'a deploy et
@@ -221,10 +220,14 @@ Bu dosya, production release için yapılan ve yapılacak tüm işlemlerin detay
   - ✅ EXPO_PUBLIC_FIREBASE_APP_ID
   - ✅ EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET (yeni eklendi!)
 
-- [x] **Eksik Firebase Config Secrets** (✅ EAS'ta mevcut + eas.json'a eklendi)
+- [x] **Firebase Config Secrets** (✅ EAS'ta mevcut + eas.json'a eklendi)
   - ✅ EXPO_PUBLIC_FIREBASE_API_KEY (EAS'ta mevcut + eas.json production profili içinde)
   - ✅ EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET (EAS'ta mevcut + eas.json'a eklendi)
-  - **Durum**: Tüm secrets EAS'ta mevcut, production build'ler için hazır
+  - ✅ EXPO_PUBLIC_FIREBASE_APP_ID (EAS'ta mevcut)
+  - ✅ EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN (EAS'ta mevcut)
+  - ✅ EXPO_PUBLIC_FIREBASE_PROJECT_ID (EAS'ta mevcut)
+  - ✅ EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID (EAS'ta mevcut)
+  - **Durum**: Tüm Firebase secrets EAS'ta mevcut, production build'ler için hazır
   - **Öncelik**: ✅ Tamamlandı
 
 - [x] **Google Maps API Key Secrets** (✅ EAS'ta mevcut + eas.json'a eklendi)
@@ -242,10 +245,12 @@ Bu dosya, production release için yapılan ve yapılacak tüm işlemlerin detay
 
 **Not**: `eas secret:list` komutu deprecated, yeni komut `eas env:list` kullanılmalı (interaktif prompt gerektirir)
 
-- [ ] **Secrets Doğrulama**
-  - `eas secret:list` ile tüm secrets'ları kontrol et
-  - **Süre**: ~2 dakika
-  - **Öncelik**: Yüksek
+- [x] **Secrets Doğrulama** (✅ Tamamlandı)
+  - ✅ `eas env:list` ile tüm secrets'lar kontrol edildi
+  - ✅ Tüm kritik secrets mevcut ve doğrulandı
+  - ✅ EXPO_PUBLIC_ENVIRONMENT eklendi (plaintext visibility ile)
+  - **Durum**: Tüm secrets doğrulandı ve production build'ler için hazır
+  - **Öncelik**: ✅ Tamamlandı
 
 #### 4. Store Assets Hazırlama
 
@@ -422,11 +427,11 @@ Bu işlemler kod tarafında yapılamaz, kullanıcının manuel olarak yapması g
 ### Faz 1: Kritik Hazırlık (1-2 Hafta)
 
 1. ✅ Legal dokümanlar hazırlandı (Privacy Policy, Terms of Service)
-2. ⏳ Firebase Console: Index oluşturma (~30 dakika)
-3. ⏳ Google Cloud Console: API key'ler (~1 saat)
-4. ⏳ EAS Secrets ayarlama (~30 dakika)
+2. ✅ Firebase Console: Index kontrolü - TÜM INDEX'LER MEVCUT (~5 dakika)
+3. ⏳ Google Cloud Console: API key'ler (~1 saat) - API key'ler mevcut ama restrictions kontrol edilmeli
+4. ✅ EAS Secrets ayarlama - TÜM SECRETS MEVCUT (~5 dakika)
 5. ⏳ Store assets hazırlama (~4-8 saat)
-6. ⏳ Legal dokümanlar hosting (~1 saat)
+6. ✅ Legal dokümanlar hosting - GitHub Pages aktif (~1 saat)
 7. ⏳ Production build test (~4 saat)
 
 **Toplam Süre**: ~10-15 saat aktif çalışma
@@ -449,20 +454,22 @@ Bu işlemler kod tarafında yapılamaz, kullanıcının manuel olarak yapması g
 
 ## 📊 İlerleme Durumu
 
-**Genel Tamamlanma**: ~%92
+**Genel Tamamlanma**: ~%95
 
 ### Tamamlanan Kategoriler
-- ✅ Kod Hazırlığı: %95 (TypeScript hataları düzeltildi)
-- ✅ Güvenlik: %92
-- ✅ Dokümantasyon: %100
+- ✅ Kod Hazırlığı: %100 (TypeScript hataları düzeltildi, tüm kontroller yapıldı)
+- ✅ Güvenlik: %95 (EAS secrets mevcut, Firebase rules hazır)
+- ✅ Dokümantasyon: %100 (Tüm dokümanlar hazır)
 - ✅ Legal Dokümanlar: %100 (GitHub Pages aktif, URL'ler güncellendi)
 - ✅ Uygulama İçi Linkler: %100 (URL'ler gerçek GitHub Pages URL'leriyle güncellendi)
-- ✅ Kod Kalitesi: %100 (TypeScript compile başarılı)
+- ✅ Kod Kalitesi: %100 (TypeScript compile başarılı, lint kuralları aktif)
+- ✅ Firebase/Google Setup: %95 (Tüm secrets EAS'ta mevcut, tüm index'ler aktif ve Enabled)
+- ✅ EAS Secrets: %100 (Tüm kritik secrets mevcut ve doğrulandı)
+- ✅ Firebase Index'ler: %100 (Tüm gerekli index'ler mevcut ve Enabled)
 
 ### Eksik Kategoriler
-- ⏳ Store Hazırlığı: %40 (assets eksik)
-- ✅ Firebase/Google Setup: %95 (secrets EAS'ta mevcut, tüm index'ler aktif)
-- ⏳ Production Build: %50 (test eksik)
+- ⏳ Store Hazırlığı: %40 (assets eksik - screenshot ve icon hazırlanmalı)
+- ⏳ Production Build: %50 (build oluşturulmalı ve test edilmeli)
 - ⏳ Store Submission: %0 (henüz başlanmadı)
 
 ---
@@ -476,19 +483,20 @@ Bu işlemler kod tarafında yapılamaz, kullanıcının manuel olarak yapması g
 - ✅ Version ve build number artırıldı
 - ✅ Tüm rehberler ve checklist'ler hazır
 - ✅ TypeScript compile hataları düzeltildi (firestore.rules.test.ts)
-- ✅ EAS secrets durumu kontrol edildi ve eas.json production profili güncellendi
-- ✅ Firebase index kontrolü yapıldı, eksik index tespit edildi (firestore.indexes.json güncellendi)
+- ✅ EAS secrets durumu kontrol edildi - TÜM SECRETS MEVCUT ve doğrulandı
+- ✅ eas.json production profili güncellendi (backup olarak secrets eklendi)
+- ✅ Firebase index kontrolü yapıldı - TÜM INDEX'LER MEVCUT VE ENABLED
+- ✅ firestore.indexes.json güncellendi (tüm index tanımları mevcut)
+- ✅ EXPO_PUBLIC_ENVIRONMENT eklendi (plaintext visibility ile)
 - ✅ Kod tarafında placeholder ve TODO'lar temizlendi
 - ✅ E-posta placeholder'ları güncellendi (support@laststop.com)
 
 ### Yapılacak İşlemler
-- ⏳ Firebase Console işlemleri (`FIREBASE_GOOGLE_SETUP.md` rehberine bakın)
-- ⏳ Google Cloud Console işlemleri (`FIREBASE_GOOGLE_SETUP.md` rehberine bakın)
-- ⏳ EAS Secrets ayarlama (`DEPLOYMENT.md` rehberine bakın)
-- ⏳ Store assets hazırlama (`STORE_ASSETS_GUIDE.md` rehberine bakın)
-- ⏳ Legal dokümanlar hosting
-- ⏳ Production build ve test
-- ⏳ Store submission
+- ⏳ Firebase Console: Security Rules deploy (`FIREBASE_GOOGLE_SETUP.md` rehberine bakın)
+- ⏳ Google Cloud Console: API key restrictions kontrolü (`FIREBASE_GOOGLE_SETUP.md` rehberine bakın)
+- ⏳ Store assets hazırlama (`STORE_ASSETS_GUIDE.md` rehberine bakın) - Screenshot ve icon
+- ⏳ Production build oluşturma ve test (`DEPLOYMENT.md` rehberine bakın)
+- ⏳ Store submission (Play Store ve App Store) (`DEPLOYMENT.md` rehberine bakın)
 
 ### Placeholder'lar Güncellendi ✅
 1. ✅ **SettingsHomeScreen.tsx**:
@@ -539,16 +547,16 @@ Bu işlemler kod tarafında yapılamaz, kullanıcının manuel olarak yapması g
 
 Store yayınından önce şunları kontrol edin:
 
-1. ✅ Tüm dokümanlar hazır mı?
-2. ⏳ Firebase index oluşturuldu mu?
-3. ⏳ Google Maps API key'ler hazır mı?
-4. ⏳ EAS Secrets ayarlandı mı?
-5. ⏳ Store assets hazır mı?
-6. ⏳ Legal dokümanlar web'de yayınlandı mı?
-7. ⏳ Production build test edildi mi?
-8. ⏳ Store listing'ler hazır mı?
+1. ✅ Tüm dokümanlar hazır mı? - **EVET**
+2. ✅ Firebase index'ler oluşturuldu mu? - **EVET (Tüm index'ler mevcut ve Enabled)**
+3. ⏳ Google Maps API key'ler hazır mı? - **EVET (EAS'ta mevcut, restrictions kontrol edilmeli)**
+4. ✅ EAS Secrets ayarlandı mı? - **EVET (Tüm kritik secrets mevcut)**
+5. ⏳ Store assets hazır mı? - **HAYIR (Screenshot ve icon hazırlanmalı)**
+6. ✅ Legal dokümanlar web'de yayınlandı mı? - **EVET (GitHub Pages aktif)**
+7. ⏳ Production build test edildi mi? - **HAYIR (Build oluşturulmalı ve test edilmeli)**
+8. ⏳ Store listing'ler hazır mı? - **HAYIR (Metadata ve assets hazırlanmalı)**
 
 ---
 
-**Son Güncelleme**: 2024-12-XX
+**Son Güncelleme**: 2024-12-18
 
