@@ -170,9 +170,23 @@ eas build:view --id [BUILD_ID]
 ```
 
 2. **Yaygın sorunlar:**
-   - **Secrets eksik**: EAS Secrets kontrol edin
-   - **Firebase config hatası**: `app.config.ts` kontrol edin
-   - **Google Maps API key hatası**: API key restrictions kontrol edin
+
+   **npm ci hatası (Install dependencies failed):**
+   - `package-lock.json` ile `package.json` arasında uyumsuzluk olabilir
+   - Çözüm: `package-lock.json`'u silip `npm install` ile yeniden oluşturun
+   - `.easignore` dosyası transit-api klasörünü exclude etmeli
+   
+   **Secrets eksik:**
+   - EAS Secrets kontrol edin: `eas env:list --scope project`
+   - Eksik secrets'ları ekleyin
+   
+   **Firebase config hatası:**
+   - `app.config.ts` kontrol edin
+   - Firebase config değerlerinin doğru olduğundan emin olun
+   
+   **Google Maps API key hatası:**
+   - API key restrictions kontrol edin
+   - Billing aktif mi kontrol edin
 
 ### Uygulama Çalışmıyorsa
 
