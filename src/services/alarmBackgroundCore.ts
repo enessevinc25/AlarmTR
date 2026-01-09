@@ -15,6 +15,14 @@ import {
   ActiveAlarmStateSnapshot,
 } from '../context/AlarmContext';
 import { diagLog } from './alarmDiagnostics';
+import {
+  updateAccuracyState,
+  createAccuracyState,
+  loadAccuracyState,
+  saveAccuracyState,
+  DEFAULT_ACC_CFG,
+  type AccuracyState,
+} from './alarmAccuracyEngine';
 
 const PENDING_SYNC_EVENTS_KEY = '@laststop/pendingSyncEvents';
 const HEARTBEAT_LOG_KEY = '@laststop/heartbeatLog';
@@ -63,14 +71,6 @@ export async function processBackgroundLocationUpdate(
       return { triggered: false, distance: null };
     }
 
-    // GPS accuracy kontrolü (yanlış tetikleme riskini azalt)
-    const ACCURACY_THRESHOLD = 50; // metre
-    if (coords.accuracy !== undefined && coords.accuracy > ACCURACY_THRESHOLD) {
-      // Düşük accuracy: bu update'i skip et
-      logHeartbeat(snapshot.sessionId, null, coords.accuracy, false);
-      return { triggered: false, distance: null };
-    }
-
     // Mesafe hesapla
     const distance = getDistanceInMeters(
       coords.latitude,
@@ -82,6 +82,31 @@ export async function processBackgroundLocationUpdate(
     if (!Number.isFinite(distance) || distance <= 0) {
       return { triggered: false, distance: null };
     }
+
+    // Accuracy Engine: State yükle veya oluştur
+    let accuracyState: AccuracyState | null = await loadAccuracyState(snapshot.sessionId);
+    if (!accuracyState) {
+      accuracyState = createAccuracyState(snapshot.sessionId);
+    }
+
+    // Accuracy Engine: Karar ver
+    const nowMs = Date.now();
+    const decision = updateAccuracyState(
+      accuracyState,
+      {
+        nowMs,
+        targetRadiusMeters: snapshot.distanceThresholdMeters,
+        distanceMeters: distance,
+        locationTimestampMs: coords.timestamp,
+        accuracyMeters: coords.accuracy,
+      },
+      DEFAULT_ACC_CFG,
+    );
+
+    // State'i kaydet
+    await saveAccuracyState(decision.nextState).catch(() => {
+      // Ignore save errors
+    });
 
     // Mesafeyi yuvarla (privacy: hassas veri yok)
     const distanceRounded = Math.round(distance / 10) * 10; // 10m'lik yuvarlama
@@ -97,7 +122,9 @@ export async function processBackgroundLocationUpdate(
     }
     
     // Location timestamp age (eğer varsa)
-    const locationAgeSec = 0; // LocationObject'te timestamp yok, bu yüzden 0
+    const locationAgeSec = coords.timestamp
+      ? (nowMs - coords.timestamp) / 1000
+      : 0;
 
     // Diagnostic: LOCATION_UPDATE
     diagLog(snapshot.sessionId, {
@@ -106,6 +133,8 @@ export async function processBackgroundLocationUpdate(
       data: {
         ageSec: locationAgeSec,
         accuracyBucket,
+        acceptedSample: decision.acceptedSample,
+        reason: decision.reason,
       },
     }).catch(() => {
       // Ignore diagnostic errors
@@ -117,17 +146,19 @@ export async function processBackgroundLocationUpdate(
       type: 'DISTANCE_UPDATE',
       data: {
         distMetersRounded: distanceRounded,
+        smoothedDistanceMeters: Math.round(decision.smoothedDistanceMeters / 5) * 5, // 5m bucket
+        isInside: decision.isInside,
+        insideStreak: decision.nextState.insideStreak,
       },
     }).catch(() => {
       // Ignore diagnostic errors
     });
 
-    // Heartbeat log
-    const triggered = distance <= snapshot.distanceThresholdMeters;
-    logHeartbeat(snapshot.sessionId, distance, coords.accuracy, triggered);
+    // Heartbeat log (eski format korunuyor, backward compatibility için)
+    logHeartbeat(snapshot.sessionId, distance, coords.accuracy, decision.shouldTrigger);
 
-    // Trigger kontrolü
-    if (triggered) {
+    // Trigger kontrolü: Accuracy Engine kararına göre
+    if (decision.shouldTrigger) {
       // Idempotency: aynı alarm 2 kez tetiklenmesin
       // Status zaten guard'da kontrol edildi, burada sadece 'ACTIVE' olabilir
       // Ama yine de double-check yap (race condition için)
@@ -146,6 +177,11 @@ export async function processBackgroundLocationUpdate(
         level: 'info',
         type: 'NOTIFICATION_FIRED',
         msg: 'Alarm notification fired',
+        data: {
+          reason: decision.reason,
+          smoothedDistanceMeters: Math.round(decision.smoothedDistanceMeters / 5) * 5,
+          insideStreak: decision.nextState.insideStreak,
+        },
       }).catch(() => {
         // Ignore diagnostic errors
       });
