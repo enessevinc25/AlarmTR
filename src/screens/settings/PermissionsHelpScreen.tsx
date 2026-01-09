@@ -2,6 +2,9 @@ import { Linking, Platform, Text, TouchableOpacity, View } from 'react-native';
 
 import ScreenContainer from '../../components/common/ScreenContainer';
 import { captureError } from '../../utils/errorReporting';
+import { requestIgnoreBatteryOptimizations } from '../../services/batteryOptimization';
+import PrimaryButton from '../../components/common/PrimaryButton';
+import { useAppTheme } from '../../theme/useAppTheme';
 
 const iosSteps = [
   'Ayarlar uygulamasını aç.',
@@ -19,6 +22,7 @@ const androidSteps = [
 
 const PermissionsHelpScreen = () => {
   const steps = Platform.OS === 'ios' ? iosSteps : androidSteps;
+  const { colors } = useAppTheme();
 
   const handleOpenSettings = async () => {
     try {
@@ -28,6 +32,17 @@ const PermissionsHelpScreen = () => {
         console.warn('Ayarlar açılamadı', error);
       }
       captureError(error, 'PermissionsHelpScreen/openSettings');
+    }
+  };
+
+  const handleRequestBatteryOptimization = async () => {
+    try {
+      await requestIgnoreBatteryOptimizations();
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('Pil optimizasyonu istisnası açılamadı', error);
+      }
+      captureError(error, 'PermissionsHelpScreen/requestBatteryOptimization');
     }
   };
 
@@ -42,23 +57,33 @@ const PermissionsHelpScreen = () => {
 
       {steps.map((step, index) => (
         <View key={step} style={{ flexDirection: 'row', marginBottom: 8, gap: 8 }}>
-          <Text style={{ fontWeight: '700', color: '#0E7490' }}>{index + 1}.</Text>
-          <Text style={{ flex: 1, color: '#475569' }}>{step}</Text>
+          <Text style={{ fontWeight: '700', color: colors.primary }}>{index + 1}.</Text>
+          <Text style={{ flex: 1, color: colors.textMuted }}>{step}</Text>
         </View>
       ))}
 
-      <TouchableOpacity
+      {/* Android: Pil Optimizasyonu İstisnası */}
+      {Platform.OS === 'android' && (
+        <View style={{ marginTop: 24, marginBottom: 16 }}>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 8 }}>
+            Pil Optimizasyonu
+          </Text>
+          <Text style={{ color: colors.textMuted, marginBottom: 12 }}>
+            Alarmın arka planda stabil çalışması için uygulamayı optimizasyondan hariç tut.
+          </Text>
+          <PrimaryButton
+            title="İstisna İste"
+            onPress={handleRequestBatteryOptimization}
+            style={{ marginBottom: 12 }}
+          />
+        </View>
+      )}
+
+      <PrimaryButton
+        title="Cihaz Ayarlarını Aç"
         onPress={handleOpenSettings}
-        style={{
-          marginTop: 24,
-          backgroundColor: '#0E7490',
-          paddingVertical: 14,
-          borderRadius: 12,
-          alignItems: 'center',
-        }}
-      >
-        <Text style={{ color: '#fff', fontWeight: '600' }}>Cihaz Ayarlarını Aç</Text>
-      </TouchableOpacity>
+        style={{ marginTop: 8 }}
+      />
     </ScreenContainer>
   );
 };

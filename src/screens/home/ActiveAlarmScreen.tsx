@@ -21,6 +21,7 @@ import { HomeStackParamList } from '../../navigation/navigationTypes';
 import { goToPermissionsHelp, goToSamsungBatteryHelp } from '../../navigation/navigationService';
 import { useAppTheme } from '../../theme/useAppTheme';
 import { diagLog } from '../../services/alarmDiagnostics';
+import { healthCheckLocationTracking } from '../../services/alarmSurvivalService';
 import { AlarmSession, TransitStop, UserTarget } from '../../types/models';
 import { getUserTargetById } from '../../services/stopsService';
 import { fetchStopById } from '../../services/transitProvider';

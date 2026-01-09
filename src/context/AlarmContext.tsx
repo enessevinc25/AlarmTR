@@ -33,6 +33,7 @@ import {
   PendingAlarmSessionCreate,
 } from '../services/offlineQueueService';
 import { diagStart, diagStop, diagLog, diagSummarize } from '../services/alarmDiagnostics';
+import { ensureLocationTrackingForAlarm, stopLocationTrackingForAlarm } from '../services/alarmSurvivalService';
 
 interface AlarmContextValue {
   activeAlarmSessionId: string | null;
@@ -469,6 +470,13 @@ export const AlarmProvider = ({ children }: { children: ReactNode }) => {
             msg: 'Offline alarm start flow completed',
           });
 
+          // Foreground service ile location tracking başlat (Android)
+          await ensureLocationTrackingForAlarm(localSession.id).catch((error) => {
+            if (__DEV__) {
+              console.warn('[AlarmContext] Failed to start location tracking (offline):', error);
+            }
+          });
+
           if (__DEV__) {
             console.log('[AlarmContext] Offline modda alarm session oluşturuldu:', localSessionId);
           }
@@ -512,6 +520,15 @@ export const AlarmProvider = ({ children }: { children: ReactNode }) => {
         setActiveAlarmSessionId(session.id);
         setActiveAlarmSession(session);
         await persistActiveAlarmSnapshot(session);
+
+        // Foreground service ile location tracking başlat (Android)
+        await ensureLocationTrackingForAlarm(session.id).catch((error) => {
+          if (__DEV__) {
+            console.warn('[AlarmContext] Failed to start location tracking:', error);
+          }
+          // Hata durumunda alarm başlatma devam eder
+        });
+
         return session;
       } catch (error) {
         captureError(error, 'AlarmContext/startAlarmSession');

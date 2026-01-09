@@ -1,6 +1,9 @@
 // Background tasks bootstrap - app cold start'ta TaskManager.defineTask register olsun
 import './src/bootstrap/backgroundTasks';
 
+// Resume active alarm - app açılışında aktif alarm varsa location tracking'i yeniden başlat
+import { resumeActiveAlarmIfNeeded } from './src/bootstrap/resumeActiveAlarm';
+
 import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
