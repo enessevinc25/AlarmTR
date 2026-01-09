@@ -256,6 +256,15 @@ const ActiveAlarmScreen = ({ route, navigation }: Props) => {
       return;
     }
 
+    // Health-check timer: 30-45 saniyede bir location tracking'i kontrol et
+    const healthCheckInterval = setInterval(() => {
+      healthCheckLocationTracking(session.id).catch((error) => {
+        if (__DEV__) {
+          console.warn('[ActiveAlarmScreen] Health check failed:', error);
+        }
+      });
+    }, 35000); // 35 saniye
+
     let canceled = false;
 
     const startTracking = async () => {
@@ -462,6 +471,7 @@ const ActiveAlarmScreen = ({ route, navigation }: Props) => {
 
     return () => {
       canceled = true;
+      clearInterval(healthCheckInterval);
       stopForegroundLocationTracking();
       void stopBackgroundLocationTracking().finally(() => setBackgroundTrackingEnabled(false));
       void stopGeofencing();
