@@ -294,21 +294,24 @@ const AlarmDetailsScreen = ({ route, navigation }: Props) => {
         finalDistance = clampDistance(parsed);
       }
 
-      // Preflight kontrolü (P0)
-      const preflight = await runAlarmPreflight();
-      if (!preflight.canProceed) {
-        // Eksik izinler var, preflight ekranına yönlendir
-        navigation.navigate('AlarmPreflight', {
-          startPayload: {
-            targetType,
-            targetId,
-            distanceThresholdMeters: finalDistance,
-            transportMode,
-            minutesBefore,
-            targetSnapshot: target, // Zaten yüklenmiş target objesini geçir
-          },
-        });
-        return;
+      // Feature flag kontrolü: enableAlarmPreflight
+      const enablePreflight = await getFeatureFlag('enableAlarmPreflight', true);
+      if (enablePreflight) {
+        const preflight = await runAlarmPreflight();
+        if (!preflight.canProceed) {
+          // Eksik izinler var, preflight ekranına yönlendir
+          navigation.navigate('AlarmPreflight', {
+            startPayload: {
+              targetType,
+              targetId,
+              distanceThresholdMeters: finalDistance,
+              transportMode,
+              minutesBefore,
+              targetSnapshot: target, // Zaten yüklenmiş target objesini geçir
+            },
+          });
+          return;
+        }
       }
 
       // Preflight başarılı, alarmı başlat

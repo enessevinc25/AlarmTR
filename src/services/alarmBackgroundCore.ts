@@ -179,9 +179,9 @@ export async function processBackgroundLocationUpdate(
         type: 'NOTIFICATION_FIRED',
         msg: 'Alarm notification fired',
         data: {
-          reason: decision.reason,
-          smoothedDistanceMeters: Math.round(decision.smoothedDistanceMeters / 5) * 5,
-          insideStreak: decision.nextState.insideStreak,
+          reason,
+          smoothedDistanceMeters: Math.round(smoothedDistanceMeters / 5) * 5,
+          insideStreak,
         },
       }).catch(() => {
         // Ignore diagnostic errors
