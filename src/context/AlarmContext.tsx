@@ -632,6 +632,13 @@ export const AlarmProvider = ({ children }: { children: ReactNode }) => {
           setActiveAlarmSession(nextSession);
           await persistActiveAlarmSnapshot(nextSession);
         }
+
+        // Location tracking'i durdur (Android) - alarm tetiklendi
+        await stopLocationTrackingForAlarm(alarmSessionId).catch((error) => {
+          if (__DEV__) {
+            console.warn('[AlarmContext] Failed to stop location tracking (triggered):', error);
+          }
+        });
       } catch (error) {
         captureError(error, 'AlarmContext/markAlarmTriggered');
         throw error;

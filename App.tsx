@@ -72,6 +72,15 @@ function AppContent() {
   useEffect(() => {
     installGlobalErrorHandlers();
   }, []);
+
+  // Resume active alarm on app start
+  useEffect(() => {
+    resumeActiveAlarmIfNeeded().catch((error) => {
+      if (__DEV__) {
+        console.warn('[App] Failed to resume active alarm:', error);
+      }
+    });
+  }, []);
   
   // React Navigation theme objesi (dark mode desteği için)
   const navigationTheme = {
