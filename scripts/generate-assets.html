@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LastStop Alarm TR - Asset Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #0E7490;
+            margin-bottom: 10px;
+        }
+        .preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .preview-item {
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        .preview-item h3 {
+            margin-top: 0;
+            color: #0f172a;
+        }
+        canvas {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            margin: 10px 0;
+        }
+        button {
+            background: #0E7490;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0C4A6E;
+        }
+        .info {
+            background: #E0F2FE;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #0E7490;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚌 LastStop Alarm TR - Asset Generator</h1>
+        <p>Bu sayfa icon ve splash screen asset'lerini oluşturmanıza yardımcı olur.</p>
+        
+        <div class="info">
+            <strong>Kullanım:</strong> Aşağıdaki butonlara tıklayarak PNG dosyalarını indirebilirsiniz.
+            Dosyaları <code>assets/</code> klasörüne kopyalayın.
+        </div>
+
+        <div class="preview">
+            <!-- Icon Preview -->
+            <div class="preview-item">
+                <h3>App Icon (1024x1024px)</h3>
+                <canvas id="iconCanvas" width="512" height="512"></canvas>
+                <br>
+                <button onclick="downloadIcon()">İndir (1024x1024)</button>
+            </div>
+
+            <!-- Splash Preview -->
+            <div class="preview-item">
+                <h3>Splash Screen (2048x2048px)</h3>
+                <canvas id="splashCanvas" width="512" height="512"></canvas>
+                <br>
+                <button onclick="downloadSplash()">İndir (2048x2048)</button>
+            </div>
+
+            <!-- Adaptive Icon Preview -->
+            <div class="preview-item">
+                <h3>Adaptive Icon (1024x1024px)</h3>
+                <canvas id="adaptiveCanvas" width="512" height="512"></canvas>
+                <br>
+                <button onclick="downloadAdaptive()">İndir (1024x1024)</button>
+            </div>
+        </div>
+
+        <div class="info">
+            <strong>Not:</strong> Bu basit bir template'tir. Profesyonel tasarım için bir tasarımcıdan yardım almanız önerilir.
+        </div>
+    </div>
+
+    <script>
+        const primaryColor = '#0E7490';
+        const primaryDark = '#0C4A6E';
+        const white = '#FFFFFF';
+        const warning = '#F59E0B';
+
+        // Icon Canvas
+        function drawIcon(canvas, scale = 1) {
+            const ctx = canvas.getContext('2d');
+            const size = canvas.width;
+            const center = size / 2;
+            
+            // Clear
+            ctx.clearRect(0, 0, size, size);
+            
+            // Background circle
+            ctx.fillStyle = primaryColor;
+            ctx.beginPath();
+            ctx.arc(center, center, center, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Bus stop sign
+            const busY = center + (center * 0.2 * scale);
+            const poleWidth = 20 * scale;
+            const poleHeight = 100 * scale;
+            const signSize = 120 * scale;
+            
+            // Pole
+            ctx.fillStyle = white;
+            ctx.fillRect(center - poleWidth/2, busY, poleWidth, poleHeight);
+            
+            // Sign
+            ctx.fillRect(center - signSize/2, busY - signSize, signSize, signSize);
+            ctx.fillStyle = primaryColor;
+            ctx.font = `bold ${60 * scale}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🚌', center, busY - signSize/2);
+            
+            // Alarm bell (top right)
+            const bellX = center + (center * 0.2 * scale);
+            const bellY = center - (center * 0.2 * scale);
+            ctx.fillStyle = warning;
+            ctx.strokeStyle = white;
+            ctx.lineWidth = 4 * scale;
+            
+            // Bell shape
+            ctx.beginPath();
+            ctx.moveTo(bellX, bellY - 40 * scale);
+            ctx.lineTo(bellX + 10 * scale, bellY - 30 * scale);
+            ctx.lineTo(bellX + 10 * scale, bellY + 20 * scale);
+            ctx.lineTo(bellX - 10 * scale, bellY + 20 * scale);
+            ctx.lineTo(bellX - 10 * scale, bellY - 30 * scale);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            // Bell top circle
+            ctx.fillStyle = white;
+            ctx.beginPath();
+            ctx.arc(bellX, bellY - 20 * scale, 8 * scale, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // App initials
+            ctx.fillStyle = white;
+            ctx.font = `bold ${40 * scale}px Arial`;
+            ctx.fillText('LS', center, center + (center * 0.4 * scale));
+        }
+
+        // Splash Canvas
+        function drawSplash(canvas, scale = 1) {
+            const ctx = canvas.getContext('2d');
+            const size = canvas.width;
+            const center = size / 2;
+            
+            // Clear
+            ctx.clearRect(0, 0, size, size);
+            
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, size);
+            gradient.addColorStop(0, primaryColor);
+            gradient.addColorStop(1, primaryDark);
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Main icon (centered)
+            const iconY = center - (center * 0.1 * scale);
+            const poleWidth = 15 * scale;
+            const poleHeight = 75 * scale;
+            const signSize = 90 * scale;
+            
+            // Bus stop
+            ctx.fillStyle = white;
+            ctx.fillRect(center - poleWidth/2, iconY, poleWidth, poleHeight);
+            ctx.fillRect(center - signSize/2, iconY - signSize, signSize, signSize);
+            ctx.fillStyle = primaryColor;
+            ctx.font = `bold ${50 * scale}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🚌', center, iconY - signSize/2);
+            
+            // Alarm bell
+            const bellX = center + (center * 0.15 * scale);
+            const bellY = iconY - (center * 0.15 * scale);
+            ctx.fillStyle = warning;
+            ctx.strokeStyle = white;
+            ctx.lineWidth = 3 * scale;
+            
+            ctx.beginPath();
+            ctx.moveTo(bellX, bellY - 30 * scale);
+            ctx.lineTo(bellX + 8 * scale, bellY - 22 * scale);
+            ctx.lineTo(bellX + 8 * scale, bellY + 10 * scale);
+            ctx.lineTo(bellX - 8 * scale, bellY + 10 * scale);
+            ctx.lineTo(bellX - 8 * scale, bellY - 22 * scale);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            ctx.fillStyle = white;
+            ctx.beginPath();
+            ctx.arc(bellX, bellY - 15 * scale, 5 * scale, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // App name
+            ctx.fillStyle = white;
+            ctx.font = `bold ${45 * scale}px Arial`;
+            ctx.fillText('LastStop Alarm TR', center, center + (center * 0.2 * scale));
+            
+            // Subtitle
+            ctx.fillStyle = '#E0F2FE';
+            ctx.font = `${20 * scale}px Arial`;
+            ctx.fillText('Durağını kaçırma', center, center + (center * 0.35 * scale));
+        }
+
+        // Adaptive Icon Canvas
+        function drawAdaptive(canvas, scale = 1) {
+            const ctx = canvas.getContext('2d');
+            const size = canvas.width;
+            const center = size / 2;
+            
+            // Clear
+            ctx.clearRect(0, 0, size, size);
+            
+            // Background
+            ctx.fillStyle = primaryColor;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Content in safe area (20% margin = 0.2 * size)
+            const safeArea = size * 0.8;
+            const safeStart = size * 0.1;
+            
+            // Bus stop (centered in safe area)
+            const busY = center + (safeArea * 0.1 * scale);
+            const poleWidth = 12 * scale;
+            const poleHeight = 60 * scale;
+            const signSize = 70 * scale;
+            
+            ctx.fillStyle = white;
+            ctx.fillRect(center - poleWidth/2, busY, poleWidth, poleHeight);
+            ctx.fillRect(center - signSize/2, busY - signSize, signSize, signSize);
+            ctx.fillStyle = primaryColor;
+            ctx.font = `bold ${40 * scale}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🚌', center, busY - signSize/2);
+            
+            // Alarm bell
+            const bellX = center + (safeArea * 0.12 * scale);
+            const bellY = center - (safeArea * 0.1 * scale);
+            ctx.fillStyle = warning;
+            ctx.strokeStyle = white;
+            ctx.lineWidth = 2.5 * scale;
+            
+            ctx.beginPath();
+            ctx.moveTo(bellX, bellY - 25 * scale);
+            ctx.lineTo(bellX + 6 * scale, bellY - 18 * scale);
+            ctx.lineTo(bellX + 6 * scale, bellY + 8 * scale);
+            ctx.lineTo(bellX - 6 * scale, bellY + 8 * scale);
+            ctx.lineTo(bellX - 6 * scale, bellY - 18 * scale);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            ctx.fillStyle = white;
+            ctx.beginPath();
+            ctx.arc(bellX, bellY - 12 * scale, 4 * scale, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Download functions
+        function downloadCanvas(canvasId, filename, width, height) {
+            const canvas = document.getElementById(canvasId);
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = width;
+            tempCanvas.height = height;
+            const ctx = tempCanvas.getContext('2d');
+            
+            // Draw at full resolution
+            if (canvasId === 'iconCanvas') {
+                drawIcon(tempCanvas, width / 512);
+            } else if (canvasId === 'splashCanvas') {
+                drawSplash(tempCanvas, width / 512);
+            } else if (canvasId === 'adaptiveCanvas') {
+                drawAdaptive(tempCanvas, width / 512);
+            }
+            
+            // Download
+            tempCanvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+            }, 'image/png');
+        }
+
+        function downloadIcon() {
+            downloadCanvas('iconCanvas', 'icon.png', 1024, 1024);
+        }
+
+        function downloadSplash() {
+            downloadCanvas('splashCanvas', 'splash.png', 2048, 2048);
+        }
+
+        function downloadAdaptive() {
+            downloadCanvas('adaptiveCanvas', 'adaptive-icon.png', 1024, 1024);
+        }
+
+        // Initialize previews
+        window.onload = () => {
+            drawIcon(document.getElementById('iconCanvas'));
+            drawSplash(document.getElementById('splashCanvas'));
+            drawAdaptive(document.getElementById('adaptiveCanvas'));
+        };
+    </script>
+</body>
+</html>
+

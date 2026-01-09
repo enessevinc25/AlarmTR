@@ -1,0 +1,28 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- Safe Area: Content should be within 20% margin (204px from edges) -->
+  <!-- Safe Area: 204 to 820 (616x616 area) -->
+  
+  <!-- Background -->
+  <rect width="1024" height="1024" fill="#0E7490"/>
+  
+  <!-- Content Area (Safe Zone) -->
+  <g transform="translate(512, 512)">
+    <!-- Bus Stop Icon (Centered) -->
+    <g transform="translate(-100, 50)">
+      <!-- Stop Pole -->
+      <rect x="-15" y="0" width="30" height="150" fill="#FFFFFF" rx="15"/>
+      
+      <!-- Stop Sign -->
+      <rect x="-90" y="-90" width="180" height="180" fill="#FFFFFF" rx="20"/>
+      <text x="0" y="15" font-family="Arial, sans-serif" font-size="110" font-weight="bold" fill="#0E7490" text-anchor="middle">🚌</text>
+    </g>
+    
+    <!-- Alarm Bell (Right) -->
+    <g transform="translate(120, -100)">
+      <path d="M 0,-60 L 15,-45 L 15,30 L -15,30 L -15,-45 Z" fill="#F59E0B" stroke="#FFFFFF" stroke-width="6" rx="8"/>
+      <circle cx="0" cy="-30" r="12" fill="#FFFFFF"/>
+      <path d="M -8,30 Q -8,45 0,45 Q 8,45 8,30" stroke="#FFFFFF" stroke-width="6" fill="none"/>
+    </g>
+  </g>
+</svg>
+

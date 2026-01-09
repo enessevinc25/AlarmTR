@@ -1,0 +1,215 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
+
+    /**
+     * Kullanıcı giriş yapmış mı kontrol eder
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Kullanıcı belirli bir userId'nin sahibi mi kontrol eder
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Belge silinmiş mi kontrol eder (soft delete)
+     * deletedAt field'ı null veya yoksa belge aktif kabul edilir
+     */
+    function isNotDeleted() {
+      return !('deletedAt' in resource.data) || resource.data.deletedAt == null;
+    }
+
+    /**
+     * Yeni belge oluşturulurken userId doğru mu kontrol eder
+     */
+    function hasCorrectUserId() {
+      return request.resource.data.userId == request.auth.uid;
+    }
+
+    /**
+     * Update sırasında userId değiştirilmemiş mi kontrol eder
+     */
+    function userIdNotChanged() {
+      return request.resource.data.userId == resource.data.userId;
+    }
+
+    // ============================================
+    // USERS COLLECTION
+    // ============================================
+
+    /**
+     * Kullanıcı profili
+     * - Sadece kendi profilini okuyabilir/güncelleyebilir
+     * - Silme işlemi client-side'da yapılır (deleteAccountAndData)
+     */
+    match /users/{userId} {
+      // Okuma: Sadece kendi profilini okuyabilir
+      allow read: if isOwner(userId);
+      
+      // Oluşturma: Sadece kendi profilini oluşturabilir (signUp sırasında)
+      allow create: if isSignedIn() 
+        && hasCorrectUserId()
+        && request.resource.data.keys().hasAll(['name', 'email', 'createdAt']);
+      
+      // Güncelleme: Sadece kendi profilini güncelleyebilir
+      // userId değiştirilemez, email değiştirilemez (Firebase Auth üzerinden yapılır)
+      allow update: if isOwner(userId)
+        && userIdNotChanged()
+        && (!('email' in request.resource.data) || request.resource.data.email == resource.data.email);
+      
+      // Silme: Client-side'da yapılır, burada izin verilmez (güvenlik için)
+      // allow delete: if false; // Explicit olarak kapalı
+    }
+
+    // ============================================
+    // USER TARGETS COLLECTION
+    // ============================================
+
+    /**
+     * Kullanıcının özel hedefleri (custom targets)
+     * - Sadece kendi hedeflerini görebilir/oluşturabilir/güncelleyebilir/silebilir
+     */
+    match /userTargets/{targetId} {
+      // Oluşturma: Sadece kendi userId'si ile oluşturabilir
+      allow create: if isSignedIn() 
+        && hasCorrectUserId()
+        && request.resource.data.keys().hasAll(['userId', 'name', 'lat', 'lon', 'radiusMeters', 'createdAt']);
+      
+      // Okuma: Sadece kendi hedeflerini okuyabilir ve silinmemiş olmalı
+      allow read: if isSignedIn() 
+        && resource.data.userId == request.auth.uid
+        && isNotDeleted();
+      
+      // Güncelleme: Sadece kendi hedefini güncelleyebilir, userId değiştirilemez
+      allow update: if isSignedIn()
+        && resource.data.userId == request.auth.uid
+        && userIdNotChanged();
+      
+      // Silme: Sadece kendi hedefini silebilir
+      // Soft delete için update ile deletedAt set edilebilir
+      allow delete: if isSignedIn() 
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // ============================================
+    // USER SAVED STOPS COLLECTION
+    // ============================================
+
+    /**
+     * Kullanıcının favori durakları
+     * - Sadece kendi favorilerini görebilir/ekleyebilir/silebilir
+     */
+    match /userSavedStops/{savedId} {
+      // Oluşturma: Sadece kendi userId'si ile oluşturabilir
+      allow create: if isSignedIn() 
+        && hasCorrectUserId()
+        && request.resource.data.keys().hasAll(['userId', 'stopId', 'createdAt']);
+      
+      // Okuma: Sadece kendi favorilerini okuyabilir ve silinmemiş olmalı
+      allow read: if isSignedIn() 
+        && resource.data.userId == request.auth.uid
+        && isNotDeleted();
+      
+      // Güncelleme: Genellikle güncelleme yapılmaz, ama userId değiştirilemez
+      allow update: if isSignedIn()
+        && resource.data.userId == request.auth.uid
+        && userIdNotChanged();
+      
+      // Silme: Sadece kendi favorisini silebilir
+      allow delete: if isSignedIn() 
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // ============================================
+    // ALARM SESSIONS COLLECTION
+    // ============================================
+
+    /**
+     * Alarm oturumları (alarm geçmişi)
+     * - Sadece kendi alarmlarını görebilir/oluşturabilir/güncelleyebilir/silebilir
+     * - Soft delete desteği: deletedAt field'ı ile
+     */
+    match /alarmSessions/{sessionId} {
+      // Oluşturma: Sadece kendi userId'si ile oluşturabilir
+      allow create: if isSignedIn() 
+        && hasCorrectUserId()
+        && request.resource.data.keys().hasAll(['userId', 'targetType', 'targetId', 'distanceThresholdMeters', 'status', 'createdAt']);
+      
+      // Okuma: Sadece kendi alarmlarını okuyabilir ve silinmemiş olmalı
+      allow read: if isSignedIn() 
+        && resource.data.userId == request.auth.uid
+        && isNotDeleted();
+      
+      // Güncelleme: Sadece kendi alarmını güncelleyebilir
+      // Status değişiklikleri (ACTIVE -> TRIGGERED, CANCELLED) izin verilir
+      // userId değiştirilemez
+      allow update: if isSignedIn()
+        && resource.data.userId == request.auth.uid
+        && userIdNotChanged()
+        // Status güncellemeleri için özel kontrol (background sync için)
+        && (
+          // Normal güncelleme
+          request.resource.data.status == resource.data.status
+          // veya status değişikliği (ACTIVE -> TRIGGERED/CANCELLED)
+          || (resource.data.status == 'ACTIVE' && 
+              (request.resource.data.status == 'TRIGGERED' || request.resource.data.status == 'CANCELLED'))
+        );
+      
+      // Silme: Sadece kendi alarmını silebilir
+      // Soft delete için update ile deletedAt set edilebilir
+      allow delete: if isSignedIn() 
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // ============================================
+    // USER ALARM PROFILES COLLECTION
+    // ============================================
+
+    /**
+     * Kullanıcının alarm profilleri (hızlı alarm kurma için)
+     * - Sadece kendi profillerini görebilir/oluşturabilir/güncelleyebilir/silebilir
+     */
+    match /userAlarmProfiles/{profileId} {
+      // Oluşturma: Sadece kendi userId'si ile oluşturabilir
+      allow create: if isSignedIn() 
+        && hasCorrectUserId()
+        && request.resource.data.keys().hasAll(['userId', 'name', 'distanceThresholdMeters', 'createdAt']);
+      
+      // Okuma: Sadece kendi profillerini okuyabilir ve silinmemiş olmalı
+      allow read: if isSignedIn() 
+        && resource.data.userId == request.auth.uid
+        && isNotDeleted();
+      
+      // Güncelleme: Sadece kendi profilini güncelleyebilir, userId değiştirilemez
+      allow update: if isSignedIn()
+        && resource.data.userId == request.auth.uid
+        && userIdNotChanged();
+      
+      // Silme: Sadece kendi profilini silebilir
+      allow delete: if isSignedIn() 
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // ============================================
+    // DEFAULT DENY RULE
+    // ============================================
+
+    /**
+     * Yukarıdaki kurallarla eşleşmeyen tüm istekler reddedilir
+     * Bu, güvenlik için kritik bir kuraldır
+     */
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

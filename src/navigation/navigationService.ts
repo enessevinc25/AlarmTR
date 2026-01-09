@@ -92,3 +92,84 @@ export function goToActiveAlarm(alarmSessionId: string): void {
   }
 }
 
+export function goToPermissionsHelp(): void {
+  if (!navigationRef.isReady()) {
+    if (__DEV__) {
+      console.warn('[navigationService] Navigation ref is not ready, cannot navigate to PermissionsHelp');
+    }
+    return;
+  }
+
+  try {
+    navigationRef.dispatch(
+      CommonActions.navigate({
+        name: 'MainTabs',
+        params: {
+          screen: 'SettingsTab',
+          params: {
+            screen: 'PermissionsHelp',
+          },
+        },
+      }),
+    );
+  } catch (error) {
+    if (__DEV__) {
+      console.warn('[navigationService] Error navigating to PermissionsHelp:', error);
+    }
+  }
+}
+
+export function goToSamsungBatteryHelp(): void {
+  if (!navigationRef.isReady()) {
+    if (__DEV__) {
+      console.warn('[navigationService] Navigation ref is not ready, cannot navigate to SamsungBattery');
+    }
+    return;
+  }
+
+  try {
+    navigationRef.dispatch(
+      CommonActions.navigate({
+        name: 'MainTabs',
+        params: {
+          screen: 'SettingsTab',
+          params: {
+            screen: 'SamsungBattery',
+          },
+        },
+      }),
+    );
+  } catch (error) {
+    if (__DEV__) {
+      console.warn('[navigationService] Error navigating to SamsungBattery:', error);
+    }
+  }
+}
+
+export function goToAlarmPreflight(startPayload: StartAlarmSessionParams): void {
+  if (!navigationRef.isReady()) {
+    if (__DEV__) {
+      console.warn('[navigationService] Navigation ref is not ready, cannot navigate to AlarmPreflight');
+    }
+    return;
+  }
+
+  try {
+    navigationRef.dispatch(
+      CommonActions.navigate({
+        name: 'MainTabs',
+        params: {
+          screen: 'HomeTab',
+          params: {
+            screen: 'AlarmPreflight',
+            params: { startPayload },
+          },
+        },
+      }),
+    );
+  } catch (error) {
+    if (__DEV__) {
+      console.warn('[navigationService] Error navigating to AlarmPreflight:', error);
+    }
+  }
+}

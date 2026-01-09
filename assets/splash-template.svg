@@ -1,0 +1,40 @@
+<svg width="2048" height="2048" viewBox="0 0 2048 2048" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="2048" height="2048" fill="#0E7490"/>
+  
+  <!-- Gradient Overlay -->
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#0E7490;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0C4A6E;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="2048" height="2048" fill="url(#gradient)"/>
+  
+  <!-- Main Icon (Center) -->
+  <g transform="translate(1024, 800)">
+    <!-- Bus Stop Icon -->
+    <g transform="translate(0, 0)">
+      <!-- Stop Pole -->
+      <rect x="-30" y="0" width="60" height="300" fill="#FFFFFF" rx="30"/>
+      
+      <!-- Stop Sign -->
+      <rect x="-180" y="-180" width="360" height="360" fill="#FFFFFF" rx="30"/>
+      <text x="0" y="30" font-family="Arial, sans-serif" font-size="220" font-weight="bold" fill="#0E7490" text-anchor="middle">🚌</text>
+    </g>
+    
+    <!-- Alarm Bell (Right) -->
+    <g transform="translate(250, -200)">
+      <path d="M 0,-120 L 30,-90 L 30,60 L -30,60 L -30,-90 Z" fill="#F59E0B" stroke="#FFFFFF" stroke-width="12" rx="15"/>
+      <circle cx="0" cy="-60" r="25" fill="#FFFFFF"/>
+      <path d="M -15,60 Q -15,90 0,90 Q 15,90 15,60" stroke="#FFFFFF" stroke-width="12" fill="none"/>
+    </g>
+  </g>
+  
+  <!-- App Name -->
+  <text x="1024" y="1200" font-family="Arial, sans-serif" font-size="180" font-weight="bold" fill="#FFFFFF" text-anchor="middle">LastStop Alarm TR</text>
+  
+  <!-- Subtitle -->
+  <text x="1024" y="1400" font-family="Arial, sans-serif" font-size="80" fill="#E0F2FE" text-anchor="middle">Durağını kaçırma</text>
+</svg>
+

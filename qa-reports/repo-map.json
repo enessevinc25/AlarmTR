@@ -1,0 +1,6 @@
+﻿{
+    "Root":  "D:\\AlarmTR",
+    "TransitApi":  "D:\\AlarmTR\\transit-api",
+    "FirestoreIndexes":  "D:\\AlarmTR\\firestore.indexes.json",
+    "FirestoreRules":  "D:\\AlarmTR\\firestore.rules"
+}

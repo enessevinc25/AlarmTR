@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "AlarmTR",
+    "slug": "AlarmTR",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": false,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon-foreground.png",
+        "backgroundColor": "#EAF3FF"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "firebase": {
+        "authDomain": "laststop-alarm-tr-38d76.firebaseapp.com",
+        "projectId": "laststop-alarm-tr-38d76",
+        "storageBucket": "laststop-alarm-tr-38d76.firebasestorage.app",
+        "messagingSenderId": "599735223710",
+        "appId": "1:599735223710:web:24b2c5d0f189b235f7c28f",
+        "measurementId": "G-6MQ1JYK7W2"
+      },
+      "environment": "development",
+      "eas": {
+        "projectId": "81c19e04-5e78-48b6-9c52-387540a1a839"
+      }
+    }
+  }
+}

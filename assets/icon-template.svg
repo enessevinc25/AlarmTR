@@ -1,0 +1,25 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="512" cy="512" r="512" fill="#0E7490"/>
+  
+  <!-- Bus Stop Sign (Bottom) -->
+  <g transform="translate(512, 700)">
+    <!-- Stop Pole -->
+    <rect x="-20" y="0" width="40" height="200" fill="#FFFFFF" rx="20"/>
+    
+    <!-- Stop Sign -->
+    <rect x="-120" y="-120" width="240" height="240" fill="#FFFFFF" rx="20"/>
+    <text x="0" y="20" font-family="Arial, sans-serif" font-size="140" font-weight="bold" fill="#0E7490" text-anchor="middle">🚌</text>
+  </g>
+  
+  <!-- Alarm Bell (Top Right) -->
+  <g transform="translate(700, 300)">
+    <path d="M 0,-80 L 20,-60 L 20,40 L -20,40 L -20,-60 Z" fill="#F59E0B" stroke="#FFFFFF" stroke-width="8"/>
+    <circle cx="0" cy="-40" r="15" fill="#FFFFFF"/>
+    <path d="M -10,40 Q -10,60 0,60 Q 10,60 10,40" stroke="#FFFFFF" stroke-width="8" fill="none"/>
+  </g>
+  
+  <!-- App Name (Bottom) -->
+  <text x="512" y="950" font-family="Arial, sans-serif" font-size="80" font-weight="bold" fill="#FFFFFF" text-anchor="middle">LS</text>
+</svg>
+

@@ -1,0 +1,68 @@
+﻿npm.cmd : npm warn ERESOLVE overriding peer dependency
+At C:\Users\enes.sevinc\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1:7 char:16
++ function npm { & "$alpetNodePath\npm.cmd" @Args }
++                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm warn ERESOL...peer dependency:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm warn While resolving: @firebase/auth@1.11.1
+npm warn Found: @react-native-async-storage/async-storage@2.2.0
+npm warn node_modules/@react-native-async-storage/async-storage
+npm warn   @react-native-async-storage/async-storage@"2.2.0" from the root project
+npm warn
+npm warn Could not resolve dependency:
+npm warn peerOptional @react-native-async-storage/async-storage@"^1.18.1" from @firebase/auth@1.11.1
+npm warn node_modules/@firebase/auth
+npm warn   @firebase/auth@"1.11.1" from @firebase/auth-compat@0.6.1
+npm warn   node_modules/@firebase/auth-compat
+npm warn   1 more (firebase)
+npm warn
+npm warn Conflicting peer dependency: @react-native-async-storage/async-storage@1.24.0
+npm warn node_modules/@react-native-async-storage/async-storage
+npm warn   peerOptional @react-native-async-storage/async-storage@"^1.18.1" from @firebase/auth@1.11.1
+npm warn   node_modules/@firebase/auth
+npm warn     @firebase/auth@"1.11.1" from @firebase/auth-compat@0.6.1
+npm warn     node_modules/@firebase/auth-compat
+npm warn     1 more (firebase)
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: 'superstatic@9.2.0',
+npm warn EBADENGINE   required: { node: '18 || 20 || 22' },
+npm warn EBADENGINE   current: { node: 'v24.11.1', npm: '11.6.2' }
+npm warn EBADENGINE }
+npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache 
+if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and power
+ful.
+npm warn deprecated phin@3.7.1: Package no longer supported. Contact Support at https://www.npmjs.com/support for more 
+info.
+npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+npm warn deprecated abab@2.0.6: Use your platform's native atob() and btoa() methods instead
+npm warn deprecated domexception@4.0.0: Use your platform's native DOMException instead
+npm warn deprecated @testing-library/jest-native@5.4.3: DEPRECATED: This package is no longer maintained.
+npm warn deprecated Please use the built-in Jest matchers available in @testing-library/react-native v12.4+.
+npm warn deprecated
+npm warn deprecated See migration guide: https://callstack.github.io/react-native-testing-library/docs/migration/jest-m
+atchers
+npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+
+added 2309 packages, and audited 2310 packages in 53s
+
+260 packages are looking for funding
+  run `npm fund` for details
+
+6 vulnerabilities (4 moderate, 1 high, 1 critical)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.

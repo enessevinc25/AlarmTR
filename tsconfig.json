@@ -1,0 +1,46 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "esnext",
+    "lib": [
+      "esnext",
+      "dom",
+      "dom.iterable"
+    ],
+    "jsx": "react-native",
+    "module": "esnext",
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "src/*"
+      ]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "global.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "transit-api/**",
+    "transit-api/node_modules/**",
+    "transit-api/dist/**",
+    "scripts/**",
+    "functions/**",
+    "qa-temp/**",
+    "android/**",
+    "ios/**",
+    "web-build/**",
+    ".expo/**",
+    "dist/**"
+  ],
+  "extends": "expo/tsconfig.base"
+}
