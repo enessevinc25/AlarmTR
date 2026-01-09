@@ -478,9 +478,9 @@ const ActiveAlarmScreen = ({ route, navigation }: Props) => {
   return (
     <ScreenContainer>
       <View style={{ marginBottom: 24 }}>
-        <Text style={{ fontSize: 16, color: '#94a3b8' }}>Hedef</Text>
-        <Text style={{ fontSize: 28, fontWeight: '700' }}>{target.name}</Text>
-        <Text style={{ color: '#64748b', marginTop: 4 }}>
+        <Text style={{ fontSize: 16, color: colors.textMuted }}>Hedef</Text>
+        <Text style={{ fontSize: 28, fontWeight: '700', color: colors.text }}>{target.name}</Text>
+        <Text style={{ color: colors.textMuted, marginTop: 4 }}>
           Mesafe eşiği: {session.distanceThresholdMeters} m
         </Text>
         {isLocalSessionId(session.id) && (
