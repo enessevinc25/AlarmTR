@@ -25,8 +25,9 @@ export async function requestIgnoreBatteryOptimizations(): Promise<void> {
 
   try {
     // Android 6.0+ için doğrudan istisna isteme ekranı
+    // Intent action string'i direkt kullan
     await IntentLauncher.startActivityAsync(
-      IntentLauncher.ActivityAction.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+      'android.settings.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS',
       {
         data: `package:${pkg}`,
       },
@@ -38,9 +39,7 @@ export async function requestIgnoreBatteryOptimizations(): Promise<void> {
     
     // Fallback 1: Pil optimizasyonu ayarları ekranı
     try {
-      await IntentLauncher.startActivityAsync(
-        IntentLauncher.ActivityAction.IGNORE_BATTERY_OPTIMIZATION_SETTINGS,
-      );
+      await IntentLauncher.startActivityAsync('android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS');
     } catch (fallbackError) {
       if (__DEV__) {
         console.warn('[batteryOptimization] IGNORE_BATTERY_OPTIMIZATION_SETTINGS failed:', fallbackError);
