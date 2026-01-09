@@ -4,6 +4,7 @@ import * as Location from 'expo-location';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { useEffect, useState } from 'react';
+import Constants from 'expo-constants';
 import ScreenContainer from '../../components/common/ScreenContainer';
 import { SettingsStackParamList } from '../../navigation/navigationTypes';
 import { useAppTheme } from '../../theme/useAppTheme';
@@ -88,6 +89,14 @@ const DiagnosticsScreen = ({ navigation }: Props) => {
         }
       }
 
+      // Google Maps API Key Status (P0: key değerini göstermeden durum kontrolü)
+      const extra = (Constants.expoConfig?.extra as any) ?? {};
+      const mapsKeyStatus = {
+        hasAndroidKey: extra.hasGoogleMapsAndroidKey ?? false,
+        hasIOSKey: extra.hasGoogleMapsIOSKey ?? false,
+        hasWebKey: extra.hasGoogleWebKey ?? false,
+      };
+
       setDiagnostics({
         deviceInfo,
         permissions: {
@@ -107,6 +116,7 @@ const DiagnosticsScreen = ({ navigation }: Props) => {
         activeAlarm: snapshot,
         lastCrash,
         lastAlarmSessionId: lastSessionId,
+        mapsKeyStatus,
       });
       setAlarmDiagSummary(alarmDiagSummaryText);
     } catch (error) {
@@ -298,6 +308,54 @@ const DiagnosticsScreen = ({ navigation }: Props) => {
               Notifications: {diagnostics.permissions.notifications}
             </Text>
           </View>
+
+          {/* Maps Key Status */}
+          {diagnostics.mapsKeyStatus && (
+            <View style={{ marginBottom: 24 }}>
+              <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 12 }}>
+                Google Maps API Key Durumu
+              </Text>
+              <Text
+                style={{
+                  color: diagnostics.mapsKeyStatus.hasAndroidKey
+                    ? colors.success || '#22c55e'
+                    : colors.danger,
+                  marginBottom: 4,
+                }}
+              >
+                Android Maps Key: {diagnostics.mapsKeyStatus.hasAndroidKey ? 'Var' : 'Yok'}
+              </Text>
+              {!diagnostics.mapsKeyStatus.hasAndroidKey && Platform.OS === 'android' && (
+                <Text style={{ color: colors.danger, fontSize: 12, marginBottom: 4, fontStyle: 'italic' }}>
+                  ⚠️ Standalone APK'de harita yüklenmez.
+                </Text>
+              )}
+              <Text
+                style={{
+                  color: diagnostics.mapsKeyStatus.hasIOSKey
+                    ? colors.success || '#22c55e'
+                    : colors.danger,
+                  marginBottom: 4,
+                }}
+              >
+                iOS Maps Key: {diagnostics.mapsKeyStatus.hasIOSKey ? 'Var' : 'Yok'}
+              </Text>
+              {!diagnostics.mapsKeyStatus.hasIOSKey && Platform.OS === 'ios' && (
+                <Text style={{ color: colors.danger, fontSize: 12, marginBottom: 4, fontStyle: 'italic' }}>
+                  ⚠️ Standalone IPA'de harita yüklenmez.
+                </Text>
+              )}
+              <Text
+                style={{
+                  color: diagnostics.mapsKeyStatus.hasWebKey
+                    ? colors.success || '#22c55e'
+                    : colors.textMuted,
+                }}
+              >
+                Web Key: {diagnostics.mapsKeyStatus.hasWebKey ? 'Var' : 'Yok'}
+              </Text>
+            </View>
+          )}
 
           {/* Tracking Status */}
           <View style={{ marginBottom: 24 }}>

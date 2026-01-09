@@ -4,7 +4,7 @@ import Constants from 'expo-constants';
 import { useNetwork } from '../../context/NetworkContext';
 import { useAlarm } from '../../context/AlarmContext';
 import { useAuth } from '../../context/AuthContext';
-import { isDevEnv, getTransitApiBaseUrl, getGoogleMapsApiKey } from '../../utils/env';
+import { isDevEnv, getTransitApiBaseUrl, getGoogleMapsNativeKey } from '../../utils/env';
 
 const DebugInfo = () => {
   // Standalone build'lerde de göster (environment kontrolü için)
@@ -31,7 +31,7 @@ const DebugInfo = () => {
 
   let googleMapsKeyStatus = 'N/A';
   try {
-    const key = getGoogleMapsApiKey();
+    const key = getGoogleMapsNativeKey();
     googleMapsKeyStatus = key ? `${key.substring(0, 10)}...` : 'Not configured';
   } catch (error) {
     googleMapsKeyStatus = 'Error loading';

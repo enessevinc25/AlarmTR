@@ -4,24 +4,38 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   // Build-time environment validation (production için)
   const isProduction = (process.env.EXPO_PUBLIC_ENVIRONMENT ?? config?.extra?.environment) === 'production';
   
-  // Platform-specific Google Maps API keys
+  // Platform-specific Google Maps API keys (P0: 3-key model)
+  // Native key'ler ASLA genel key'e fallback yapmamalı (Places-only key harita blank yapar)
   // EAS Secrets'ta platform-specific secret'lar kullanılmalı:
-  // - EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID
-  // - EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS
-  // Fallback: EXPO_PUBLIC_GOOGLE_MAPS_API_KEY (genel key)
-  const googleMapsKeyAndroid = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID 
-    ?? process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY 
-    ?? config?.extra?.googleMapsApiKey 
-    ?? '';
+  // - EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID (Maps SDK for Android)
+  // - EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS (Maps SDK for iOS)
+  // - EXPO_PUBLIC_GOOGLE_MAPS_API_KEY (Web services - Places vb, native'de kullanılmaz)
+  const googleMapsKeyAndroid = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID ?? '';
+  const googleMapsKeyIOS = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS ?? '';
+  const googleWebKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ?? '';
   
-  const googleMapsKeyIOS = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS 
-    ?? process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY 
-    ?? config?.extra?.googleMapsApiKey 
-    ?? '';
+  // Build-time guard: Preview/Production build'lerde native key yoksa build FAIL et
+  const isNonDevBuild = (process.env.EXPO_PUBLIC_ENVIRONMENT ?? config?.extra?.environment) !== 'development';
   
-  // NOT: EAS build sırasında npx expo config çalıştırıldığında secrets henüz yüklenmemiş olabilir
-  // Runtime'da env.ts içinde API key kontrolü yapılıyor ve eksikse hata fırlatılıyor
-  // Bu yüzden burada throw etmiyoruz, EAS Secrets build sırasında otomatik olarak process.env'e yüklenir
+  // EAS build sırasında platform tespiti için process.env.EAS_BUILD_PLATFORM kullanılabilir
+  // Ama expo config çalıştırıldığında bu henüz set olmayabilir
+  // Bu yüzden her iki platform için de kontrol ediyoruz
+  if (isNonDevBuild) {
+    // Android build kontrolü (EAS build'de platform-specific kontrol yapılabilir)
+    // Şimdilik her iki key'i de kontrol ediyoruz (build-time'da hangi platform olduğu belli değil)
+    if (!googleMapsKeyAndroid && process.env.EAS_BUILD_PLATFORM !== 'ios') {
+      throw new Error(
+        'Missing EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID => Standalone APK\'de harita blank olur. ' +
+        'EAS Secrets\'a EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID ekleyin (Maps SDK for Android).'
+      );
+    }
+    if (!googleMapsKeyIOS && process.env.EAS_BUILD_PLATFORM !== 'android') {
+      throw new Error(
+        'Missing EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS => Standalone IPA\'de harita blank olur. ' +
+        'EAS Secrets\'a EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS ekleyin (Maps SDK for iOS).'
+      );
+    }
+  }
 
   return {
     ...config,
@@ -160,12 +174,15 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     // Development'da env yoksa '' (env.ts zaten hata fırlatıyor)
     // Production'da env yoksa Cloud Run fallback olabilir (ama production build'de mutlaka env set edilmeli)
     transitApiBaseUrl: 'https://laststop-alarm-tr-599735223710.europe-west1.run.app', // Production API URL (hardcoded)
-    // Platform-specific Google Maps API keys
+    // Platform-specific Google Maps API keys (P0: 3-key model)
     // Runtime'da Platform.OS'a göre seçilir (src/utils/env.ts)
     googleMapsApiKeyAndroid: googleMapsKeyAndroid,
     googleMapsApiKeyIOS: googleMapsKeyIOS,
-    // Fallback (eski kod uyumluluğu için)
-    googleMapsApiKey: googleMapsKeyAndroid, // Android default
+    googleMapsWebApiKey: googleWebKey, // Web services (Places vb) - native'de kullanılmaz
+    // Diagnostics için boolean flag'ler (key değerini göstermeden durum kontrolü)
+    hasGoogleMapsAndroidKey: !!googleMapsKeyAndroid,
+    hasGoogleMapsIOSKey: !!googleMapsKeyIOS,
+    hasGoogleWebKey: !!googleWebKey,
     eas: {
       projectId: '81c19e04-5e78-48b6-9c52-387540a1a839',
     },
