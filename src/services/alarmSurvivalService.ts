@@ -9,6 +9,7 @@ import * as Location from 'expo-location';
 import { Platform } from 'react-native';
 import { LOCATION_TASK_NAME } from './locationService';
 import { diagLog } from './alarmDiagnostics';
+import { getFeatureFlag } from './featureFlags';
 
 /**
  * Alarm aktifken location tracking'i foreground service ile başlat

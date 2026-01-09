@@ -34,6 +34,7 @@ import {
 } from '../services/offlineQueueService';
 import { diagStart, diagStop, diagLog, diagSummarize } from '../services/alarmDiagnostics';
 import { ensureLocationTrackingForAlarm, stopLocationTrackingForAlarm } from '../services/alarmSurvivalService';
+import { resumeTrackingIfNeeded } from '../services/alarmResumeService';
 
 interface AlarmContextValue {
   activeAlarmSessionId: string | null;
@@ -63,7 +64,7 @@ export interface ActiveAlarmStateSnapshot {
   lastKnownDistanceMeters?: number; // Background core için
 }
 
-interface StartAlarmSessionParams {
+export interface StartAlarmSessionParams {
   targetType: AlarmSession['targetType'];
   targetId: string;
   distanceThresholdMeters: number;
@@ -187,6 +188,14 @@ export const AlarmProvider = ({ children }: { children: ReactNode }) => {
                 console.warn('[AlarmContext] persistActiveAlarmSnapshot hatası', error);
               }
             });
+            // ACTIVE ise tracking'i resume et
+            if (stored.status === 'ACTIVE') {
+              resumeTrackingIfNeeded(stored).catch((error) => {
+                if (__DEV__) {
+                  console.warn('[AlarmContext] resumeTrackingIfNeeded hatası', error);
+                }
+              });
+            }
           } else {
             clearStoredActiveAlarm().catch((error) => {
               if (__DEV__) {
@@ -230,6 +239,27 @@ export const AlarmProvider = ({ children }: { children: ReactNode }) => {
                       console.warn('[AlarmContext] persistActiveAlarmSnapshot hatası', error);
                     }
                   });
+                  // ACTIVE ise tracking'i resume et
+                  if (session.status === 'ACTIVE') {
+                    const snapshot: ActiveAlarmStateSnapshot = {
+                      sessionId: session.id,
+                      userId: session.userId,
+                      status: session.status,
+                      targetName: session.targetName,
+                      targetLat: session.targetLat,
+                      targetLon: session.targetLon,
+                      distanceThresholdMeters: session.distanceThresholdMeters,
+                      targetType: session.targetType,
+                      targetId: session.targetId,
+                      transportMode: session.transportMode ?? null,
+                      minutesBefore: session.minutesBefore ?? null,
+                    };
+                    resumeTrackingIfNeeded(snapshot).catch((error) => {
+                      if (__DEV__) {
+                        console.warn('[AlarmContext] resumeTrackingIfNeeded hatası', error);
+                      }
+                    });
+                  }
                 } else {
                   clearStoredActiveAlarm().catch((error) => {
                     if (__DEV__) {

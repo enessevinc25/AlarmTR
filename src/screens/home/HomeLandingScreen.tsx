@@ -37,7 +37,7 @@ const QUICK_ACTIONS: QuickAction[] = [
   {
     id: 'search',
     title: 'Durak Ara',
-    description: 'Durak, hat veya adres bul',
+    description: 'Durak veya hat bul',
   },
   {
     id: 'map',

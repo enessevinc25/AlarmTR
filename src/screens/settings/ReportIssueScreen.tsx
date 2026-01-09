@@ -17,7 +17,7 @@ import { diagSummarize, getLastSessionId } from '../../services/alarmDiagnostics
 type IssueCategory = 'ALARM' | 'FAVORITES' | 'MAP' | 'OTHER';
 
 const ReportIssueScreen = () => {
-  const { colors, spacing, borderRadius } = useAppTheme();
+  const { colors } = useAppTheme();
   const [category, setCategory] = useState<IssueCategory>('ALARM');
   const [description, setDescription] = useState('');
   const [includeDiagnostics, setIncludeDiagnostics] = useState(true);
@@ -100,9 +100,9 @@ const ReportIssueScreen = () => {
 
   return (
     <ScreenContainer>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: spacing.lg }}>
-        <View style={{ marginBottom: spacing.xl }}>
-          <Text style={{ fontSize: 24, fontWeight: '700', color: colors.text, marginBottom: spacing.sm }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
+        <View style={{ marginBottom: 24 }}>
+          <Text style={{ fontSize: 24, fontWeight: '700', color: colors.text, marginBottom: 8 }}>
             Sorun Bildir
           </Text>
           <Text style={{ fontSize: 14, color: colors.textMuted, lineHeight: 20 }}>
@@ -111,11 +111,11 @@ const ReportIssueScreen = () => {
         </View>
 
         {/* Kategori */}
-        <View style={{ marginBottom: spacing.lg }}>
-          <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: spacing.sm }}>
+        <View style={{ marginBottom: 16 }}>
+          <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: 8 }}>
             Kategori
           </Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {(Object.keys(categoryLabels) as IssueCategory[]).map((cat) => (
               <PrimaryButton
                 key={cat}
@@ -135,8 +135,8 @@ const ReportIssueScreen = () => {
         </View>
 
         {/* Açıklama */}
-        <View style={{ marginBottom: spacing.lg }}>
-          <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: spacing.sm }}>
+        <View style={{ marginBottom: 16 }}>
+          <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: 8 }}>
             Sorun Açıklaması
           </Text>
           <TextInput
@@ -150,8 +150,8 @@ const ReportIssueScreen = () => {
               backgroundColor: colors.cardBackground,
               borderWidth: 1,
               borderColor: colors.border,
-              borderRadius: borderRadius.md,
-              padding: spacing.md,
+              borderRadius: 12,
+              padding: 12,
               color: colors.text,
               fontSize: 16,
               minHeight: 120,
@@ -161,13 +161,13 @@ const ReportIssueScreen = () => {
         </View>
 
         {/* Toggle'lar */}
-        <View style={{ marginBottom: spacing.xl }}>
+        <View style={{ marginBottom: 24 }}>
           <View
             style={{
               flexDirection: 'row',
               justifyContent: 'space-between',
               alignItems: 'center',
-              paddingVertical: spacing.md,
+              paddingVertical: 12,
               borderBottomWidth: 1,
               borderBottomColor: colors.border,
             }}
@@ -193,7 +193,7 @@ const ReportIssueScreen = () => {
               flexDirection: 'row',
               justifyContent: 'space-between',
               alignItems: 'center',
-              paddingVertical: spacing.md,
+              paddingVertical: 12,
             }}
           >
             <View style={{ flex: 1 }}>

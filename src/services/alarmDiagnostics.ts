@@ -6,6 +6,7 @@ import * as Location from 'expo-location';
 import { Platform } from 'react-native';
 import { captureError } from '../utils/errorReporting';
 import { ACTIVE_ALARM_STORAGE_KEY, ActiveAlarmStateSnapshot } from '../context/AlarmContext';
+import { getFeatureFlag } from './featureFlags';
 
 export type DiagLevel = 'info' | 'warn' | 'error';
 

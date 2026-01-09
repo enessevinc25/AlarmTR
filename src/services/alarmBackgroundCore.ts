@@ -50,7 +50,7 @@ interface HeartbeatLogEntry {
  * Network kullanmaz, sadece lokal hesaplama ve notification yapar.
  */
 export async function processBackgroundLocationUpdate(
-  coords: { latitude: number; longitude: number; accuracy?: number },
+  coords: { latitude: number; longitude: number; accuracy?: number; timestamp?: number },
 ): Promise<{ triggered: boolean; distance: number | null }> {
   try {
     // Snapshot'ı oku
@@ -134,8 +134,8 @@ export async function processBackgroundLocationUpdate(
       data: {
         ageSec: locationAgeSec,
         accuracyBucket,
-        acceptedSample,
-        reason,
+        acceptedSample: decision.acceptedSample,
+        reason: decision.reason,
       },
     }).catch(() => {
       // Ignore diagnostic errors
@@ -147,19 +147,19 @@ export async function processBackgroundLocationUpdate(
       type: 'DISTANCE_UPDATE',
       data: {
         distMetersRounded: distanceRounded,
-        smoothedDistanceMeters: Math.round(smoothedDistanceMeters / 5) * 5, // 5m bucket
-        isInside,
-        insideStreak,
+        smoothedDistanceMeters: Math.round(decision.smoothedDistanceMeters / 5) * 5, // 5m bucket
+        isInside: decision.isInside,
+        insideStreak: decision.nextState.insideStreak,
       },
     }).catch(() => {
       // Ignore diagnostic errors
     });
 
     // Heartbeat log (eski format korunuyor, backward compatibility için)
-    logHeartbeat(snapshot.sessionId, distance, coords.accuracy, shouldTrigger);
+    logHeartbeat(snapshot.sessionId, distance, coords.accuracy, decision.shouldTrigger);
 
     // Trigger kontrolü: Accuracy Engine kararına göre
-    if (shouldTrigger) {
+    if (decision.shouldTrigger) {
       // Idempotency: aynı alarm 2 kez tetiklenmesin
       // Status zaten guard'da kontrol edildi, burada sadece 'ACTIVE' olabilir
       // Ama yine de double-check yap (race condition için)
@@ -179,9 +179,9 @@ export async function processBackgroundLocationUpdate(
         type: 'NOTIFICATION_FIRED',
         msg: 'Alarm notification fired',
         data: {
-          reason,
-          smoothedDistanceMeters: Math.round(smoothedDistanceMeters / 5) * 5,
-          insideStreak,
+          reason: decision.reason,
+          smoothedDistanceMeters: Math.round(decision.smoothedDistanceMeters / 5) * 5,
+          insideStreak: decision.nextState.insideStreak,
         },
       }).catch(() => {
         // Ignore diagnostic errors

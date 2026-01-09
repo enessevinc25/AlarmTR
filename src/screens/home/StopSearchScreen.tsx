@@ -622,7 +622,7 @@ const StopSearchScreen = ({ navigation, route }: Props) => {
   const inputPlaceholder =
     activeTab === 'lines'
       ? 'Hat adı veya kodu ara...'
-      : 'Durak adı, hat kodu veya adres ara...';
+      : 'Durak adı veya hat kodu ara...';
 
   return (
     <ScreenContainer>
