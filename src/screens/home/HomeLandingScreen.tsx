@@ -23,6 +23,7 @@ import { buildTargetSnapshotFromSession, buildStartAlarmParamsFromSession } from
 import { Alert } from 'react-native';
 import { useAppTheme } from '../../theme/useAppTheme';
 import { runAlarmPreflight } from '../../services/alarmPreflight';
+import { getFeatureFlag } from '../../services/featureFlags';
 
 type Navigation = NativeStackNavigationProp<HomeStackParamList, 'HomeLanding'>;
 
@@ -210,16 +211,20 @@ const HomeLandingScreen = () => {
       const params = await buildStartAlarmParamsFromSession(session);
       
       // Preflight kontrolü (P0)
-      const preflight = await runAlarmPreflight();
-      if (!preflight.canProceed) {
-        // Eksik izinler var, preflight ekranına yönlendir
-        navigation.navigate('AlarmPreflight', {
-          startPayload: {
-            ...params,
-            targetSnapshot,
-          },
-        });
-        return;
+      // Feature flag kontrolü: enableAlarmPreflight
+      const enablePreflight = await getFeatureFlag('enableAlarmPreflight', true);
+      if (enablePreflight) {
+        const preflight = await runAlarmPreflight();
+        if (!preflight.canProceed) {
+          // Eksik izinler var, preflight ekranına yönlendir
+          navigation.navigate('AlarmPreflight', {
+            startPayload: {
+              ...params,
+              targetSnapshot,
+            },
+          });
+          return;
+        }
       }
 
       const newSession = await startAlarmSession({

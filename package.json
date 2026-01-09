@@ -28,7 +28,8 @@
     "gen:assets": "node scripts/generate-assets.mjs",
     "fix:icons": "node scripts/fix-icons.mjs",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
-    "lint:fix": "eslint . --ext .ts,.tsx --fix"
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "release:preflight": "tsx scripts/release/preflight.ts"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -84,6 +85,7 @@
     "react-test-renderer": "19.1.0",
     "sharp": "^0.33.5",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "~5.9.2"
   },
   "private": true

@@ -2,12 +2,15 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Pressable, Switch, Text, View, Linking, Alert } from 'react-native';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
+import { useEffect, useState } from 'react';
 
 import ScreenContainer from '../../components/common/ScreenContainer';
 import { SettingsStackParamList } from '../../navigation/navigationTypes';
 import { isDevEnv } from '../../utils/env';
 import { useAppTheme } from '../../theme/useAppTheme';
 import { useTheme } from '../../context/ThemeContext';
+import { subscribeFeatureFlags, getFeatureFlagsSync } from '../../services/featureFlags';
+import { useNetwork } from '../../context/NetworkContext';
 
 type Props = NativeStackScreenProps<SettingsStackParamList, 'SettingsHome'>;
 
@@ -37,7 +40,22 @@ const options = [
 const SettingsHomeScreen = ({ navigation }: Props) => {
   const { colors } = useAppTheme();
   const { setColorScheme, isDark } = useTheme();
+  const { isOnline } = useNetwork();
   const isSamsung = Device.manufacturer?.toLowerCase().includes('samsung') ?? false;
+  const [flagsStatus, setFlagsStatus] = useState<'connected' | 'cache'>('cache');
+  
+  useEffect(() => {
+    const unsubscribe = subscribeFeatureFlags(() => {
+      setFlagsStatus('connected');
+    });
+    return unsubscribe;
+  }, []);
+
+  // İlk yüklemede status kontrolü
+  useEffect(() => {
+    const flags = getFeatureFlagsSync();
+    setFlagsStatus(flags ? 'connected' : 'cache');
+  }, [isOnline]);
   
   const handleThemeToggle = async (value: boolean) => {
     await setColorScheme(value ? 'dark' : 'light');
@@ -77,6 +95,26 @@ const SettingsHomeScreen = ({ navigation }: Props) => {
         />
       </View>
 
+      {/* Uygulama Durumu */}
+      <View
+        style={{
+          paddingVertical: 12,
+          paddingHorizontal: 16,
+          backgroundColor: colors.cardBackground,
+          borderRadius: 8,
+          marginBottom: 16,
+          borderWidth: 1,
+          borderColor: colors.border,
+        }}
+      >
+        <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text, marginBottom: 4 }}>
+          Uygulama Durumu
+        </Text>
+        <Text style={{ fontSize: 12, color: colors.textMuted }}>
+          Sunucu ayarları: {flagsStatus === 'connected' ? 'bağlı' : 'cache'}
+        </Text>
+      </View>
+
       {options.map((item) => (
         <Pressable
           key={item.route}
@@ -94,6 +132,22 @@ const SettingsHomeScreen = ({ navigation }: Props) => {
           <Text style={{ color: colors.textLight }}>{item.description}</Text>
         </Pressable>
       ))}
+
+      {/* Sorun Bildir */}
+      <Pressable
+        onPress={() => navigation.navigate('ReportIssue')}
+        accessibilityRole="button"
+        accessibilityLabel="Sorun Bildir"
+        accessibilityHint="Karşılaştığınız sorunları bildirin"
+        style={{
+          paddingVertical: 16,
+          borderBottomWidth: 1,
+          borderColor: colors.border,
+        }}
+      >
+        <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>Sorun Bildir</Text>
+        <Text style={{ color: colors.textLight }}>Karşılaştığınız sorunları bildirin</Text>
+      </Pressable>
 
       {/* Samsung Battery (sadece Samsung cihazlarda) */}
       {isSamsung && Platform.OS === 'android' && (

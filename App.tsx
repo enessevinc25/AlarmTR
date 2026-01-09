@@ -1,6 +1,9 @@
 // Background tasks bootstrap - app cold start'ta TaskManager.defineTask register olsun
 import './src/bootstrap/backgroundTasks';
 
+// Global error handling bootstrap - unhandled errors yakalama
+import './src/bootstrap/errorHandling';
+
 // Resume active alarm - app açılışında aktif alarm varsa location tracking'i yeniden başlat
 import { resumeActiveAlarmIfNeeded } from './src/bootstrap/resumeActiveAlarm';
 

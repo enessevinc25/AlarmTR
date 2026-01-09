@@ -23,6 +23,7 @@ import {
   DEFAULT_ACC_CFG,
   type AccuracyState,
 } from './alarmAccuracyEngine';
+import { getFeatureFlag } from './featureFlags';
 
 const PENDING_SYNC_EVENTS_KEY = '@laststop/pendingSyncEvents';
 const HEARTBEAT_LOG_KEY = '@laststop/heartbeatLog';
@@ -133,8 +134,8 @@ export async function processBackgroundLocationUpdate(
       data: {
         ageSec: locationAgeSec,
         accuracyBucket,
-        acceptedSample: decision.acceptedSample,
-        reason: decision.reason,
+        acceptedSample,
+        reason,
       },
     }).catch(() => {
       // Ignore diagnostic errors
@@ -146,19 +147,19 @@ export async function processBackgroundLocationUpdate(
       type: 'DISTANCE_UPDATE',
       data: {
         distMetersRounded: distanceRounded,
-        smoothedDistanceMeters: Math.round(decision.smoothedDistanceMeters / 5) * 5, // 5m bucket
-        isInside: decision.isInside,
-        insideStreak: decision.nextState.insideStreak,
+        smoothedDistanceMeters: Math.round(smoothedDistanceMeters / 5) * 5, // 5m bucket
+        isInside,
+        insideStreak,
       },
     }).catch(() => {
       // Ignore diagnostic errors
     });
 
     // Heartbeat log (eski format korunuyor, backward compatibility için)
-    logHeartbeat(snapshot.sessionId, distance, coords.accuracy, decision.shouldTrigger);
+    logHeartbeat(snapshot.sessionId, distance, coords.accuracy, shouldTrigger);
 
     // Trigger kontrolü: Accuracy Engine kararına göre
-    if (decision.shouldTrigger) {
+    if (shouldTrigger) {
       // Idempotency: aynı alarm 2 kez tetiklenmesin
       // Status zaten guard'da kontrol edildi, burada sadece 'ACTIVE' olabilir
       // Ama yine de double-check yap (race condition için)

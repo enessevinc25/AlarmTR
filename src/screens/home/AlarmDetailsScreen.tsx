@@ -36,6 +36,7 @@ import {
   listUserAlarmProfiles,
 } from '../../services/alarmProfilesService';
 import { runAlarmPreflight } from '../../services/alarmPreflight';
+import { getFeatureFlag } from '../../services/featureFlags';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'AlarmDetails'>;
 

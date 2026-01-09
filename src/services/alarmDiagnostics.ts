@@ -200,6 +200,11 @@ async function createSnapshot(sessionId: string): Promise<Record<string, any>> {
  * Diagnostic session başlat
  */
 export async function diagStart(sessionId: string): Promise<void> {
+  // Feature flag kontrolü: enableDiagnostics
+  const enableDiagnostics = await getFeatureFlag('enableDiagnostics', true);
+  if (!enableDiagnostics) {
+    return; // No-op if disabled
+  }
   try {
     const snapshot = await createSnapshot(sessionId);
     const now = Date.now();
@@ -247,6 +252,11 @@ export async function diagStart(sessionId: string): Promise<void> {
  * Diagnostic session durdur
  */
 export async function diagStop(sessionId: string, reason: string): Promise<void> {
+  // Feature flag kontrolü: enableDiagnostics
+  const enableDiagnostics = await getFeatureFlag('enableDiagnostics', true);
+  if (!enableDiagnostics) {
+    return; // No-op if disabled
+  }
   try {
     const session = await loadSession(sessionId);
     if (!session) {

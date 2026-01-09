@@ -77,6 +77,7 @@ export type SettingsStackParamList = {
   Account: undefined;
   SamsungBattery: undefined;
   Diagnostics: undefined;
-  AlarmDebug: undefined;
+  ReportIssue: undefined;
+  AlarmDebug?: undefined; // Dev only
 };
 

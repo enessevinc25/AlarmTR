@@ -18,6 +18,15 @@ export async function ensureLocationTrackingForAlarm(sessionId: string): Promise
     return;
   }
 
+  // Feature flag kontrolü: enableForegroundSurvivalAndroid
+  const enableSurvival = await getFeatureFlag('enableForegroundSurvivalAndroid', true);
+  if (!enableSurvival) {
+    if (__DEV__) {
+      console.log('[alarmSurvivalService] Foreground survival disabled by feature flag');
+    }
+    return;
+  }
+
   try {
     const started = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME).catch(() => false);
     if (started) {

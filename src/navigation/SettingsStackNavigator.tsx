@@ -7,6 +7,7 @@ import AccountScreen from '../screens/settings/AccountScreen';
 import AlarmSettingsScreen from '../screens/settings/AlarmSettingsScreen';
 import SamsungBatteryScreen from '../screens/settings/SamsungBatteryScreen';
 import DiagnosticsScreen from '../screens/settings/DiagnosticsScreen';
+import ReportIssueScreen from '../screens/settings/ReportIssueScreen';
 import AlarmDebugScreen from '../screens/debug/AlarmDebugScreen';
 import { SettingsStackParamList } from './navigationTypes';
 import { isDevEnv } from '../utils/env';
@@ -64,6 +65,11 @@ const SettingsStackNavigator = () => {
         name="Diagnostics"
         component={DiagnosticsScreen}
         options={{ title: 'Diagnostics' }}
+      />
+      <Stack.Screen
+        name="ReportIssue"
+        component={ReportIssueScreen}
+        options={{ title: 'Sorun Bildir' }}
       />
       {isDevEnv() && (
         <Stack.Screen
