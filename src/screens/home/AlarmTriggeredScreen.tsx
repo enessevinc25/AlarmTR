@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Text, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -12,6 +12,7 @@ import { getUserTargetById } from '../../services/stopsService';
 import { fetchStopById } from '../../services/transitProvider';
 import { isLocalSessionId } from '../../services/offlineQueueService';
 import { syncPendingEventsToFirestore } from '../../services/alarmBackgroundSync';
+import { scheduleAlarmNotification } from '../../services/alarmService';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'AlarmTriggered'>;
 
@@ -20,6 +21,7 @@ const AlarmTriggeredScreen = ({ route, navigation }: Props) => {
   const { activeAlarmSession, refreshAlarmSession, clearActiveAlarm } = useAlarm();
   const [session, setSession] = useState<AlarmSession | null>(null);
   const [target, setTarget] = useState<TransitStop | UserTarget | null>(null);
+  const alarmIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -146,7 +148,44 @@ const AlarmTriggeredScreen = ({ route, navigation }: Props) => {
     load();
   }, [alarmSessionId, refreshAlarmSession, activeAlarmSession]);
 
+  // Tetiklenen alarm durdurana kadar çalmalı - interval ile tekrar tekrar notification gönder
+  useEffect(() => {
+    if (!session || !target) {
+      return;
+    }
+
+    // İlk notification'ı hemen gönder
+    scheduleAlarmNotification({
+      title: 'Durağa yaklaşıyorsun!',
+      body: `${target.name} durağına çok az kaldı. İnmek için hazırlan.`,
+    }).catch(() => {
+      // Ignore notification errors
+    });
+
+    // Her 3 saniyede bir notification gönder (alarm durdurana kadar)
+    alarmIntervalRef.current = setInterval(() => {
+      scheduleAlarmNotification({
+        title: 'Durağa yaklaşıyorsun!',
+        body: `${target.name} durağına çok az kaldı. İnmek için hazırlan.`,
+      }).catch(() => {
+        // Ignore notification errors
+      });
+    }, 3000); // 3 saniye
+
+    return () => {
+      if (alarmIntervalRef.current) {
+        clearInterval(alarmIntervalRef.current);
+        alarmIntervalRef.current = null;
+      }
+    };
+  }, [session, target]);
+
   const handleDismiss = () => {
+    // Interval'i temizle
+    if (alarmIntervalRef.current) {
+      clearInterval(alarmIntervalRef.current);
+      alarmIntervalRef.current = null;
+    }
     clearActiveAlarm();
     navigation.popToTop();
   };

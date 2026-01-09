@@ -281,7 +281,12 @@ const AlarmDetailsScreen = ({ route, navigation }: Props) => {
       setError(null);
       const trimmedCustom = customDistance.trim();
       let finalDistance = selectedDistance;
-      if (trimmedCustom.length > 0) {
+      
+      // minutesBefore varsa ve kullanıcı manuel mesafe seçmemişse, otomatik hesapla
+      if (trimmedCustom.length === 0 && minutesBefore) {
+        const calculatedDistance = getSuggestedDistanceMeters(transportMode, minutesBefore);
+        finalDistance = calculatedDistance;
+      } else if (trimmedCustom.length > 0) {
         const parsed = Number(trimmedCustom);
         if (Number.isNaN(parsed)) {
           setError('Lütfen geçerli bir mesafe girin.');
