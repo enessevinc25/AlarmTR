@@ -552,6 +552,13 @@ export const AlarmProvider = ({ children }: { children: ReactNode }) => {
           }
           // AsyncStorage'ı temizle
           await clearStoredActiveAlarm();
+          
+          // Location tracking'i durdur (Android)
+          await stopLocationTrackingForAlarm(alarmSessionId).catch((error) => {
+            if (__DEV__) {
+              console.warn('[AlarmContext] Failed to stop location tracking (local):', error);
+            }
+          });
           return;
         }
 
@@ -565,6 +572,13 @@ export const AlarmProvider = ({ children }: { children: ReactNode }) => {
           setActiveAlarmSession(null);
         }
         await clearStoredActiveAlarm();
+
+        // Location tracking'i durdur (Android)
+        await stopLocationTrackingForAlarm(alarmSessionId).catch((error) => {
+          if (__DEV__) {
+            console.warn('[AlarmContext] Failed to stop location tracking:', error);
+          }
+        });
       } catch (error) {
         captureError(error, 'AlarmContext/cancelAlarmSession');
         throw error;
