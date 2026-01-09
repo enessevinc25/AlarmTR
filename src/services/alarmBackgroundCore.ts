@@ -14,6 +14,7 @@ import {
   ACTIVE_ALARM_STORAGE_KEY,
   ActiveAlarmStateSnapshot,
 } from '../context/AlarmContext';
+import { diagLog } from './alarmDiagnostics';
 
 const PENDING_SYNC_EVENTS_KEY = '@laststop/pendingSyncEvents';
 const HEARTBEAT_LOG_KEY = '@laststop/heartbeatLog';
@@ -82,6 +83,45 @@ export async function processBackgroundLocationUpdate(
       return { triggered: false, distance: null };
     }
 
+    // Mesafeyi yuvarla (privacy: hassas veri yok)
+    const distanceRounded = Math.round(distance / 10) * 10; // 10m'lik yuvarlama
+    
+    // Accuracy bucket (privacy: hassas sayı yok)
+    let accuracyBucket: 'high' | 'mid' | 'low' = 'mid';
+    if (coords.accuracy !== undefined) {
+      if (coords.accuracy <= 20) {
+        accuracyBucket = 'high';
+      } else if (coords.accuracy > 50) {
+        accuracyBucket = 'low';
+      }
+    }
+    
+    // Location timestamp age (eğer varsa)
+    const locationAgeSec = 0; // LocationObject'te timestamp yok, bu yüzden 0
+
+    // Diagnostic: LOCATION_UPDATE
+    diagLog(snapshot.sessionId, {
+      level: 'info',
+      type: 'LOCATION_UPDATE',
+      data: {
+        ageSec: locationAgeSec,
+        accuracyBucket,
+      },
+    }).catch(() => {
+      // Ignore diagnostic errors
+    });
+
+    // Diagnostic: DISTANCE_UPDATE
+    diagLog(snapshot.sessionId, {
+      level: 'info',
+      type: 'DISTANCE_UPDATE',
+      data: {
+        distMetersRounded: distanceRounded,
+      },
+    }).catch(() => {
+      // Ignore diagnostic errors
+    });
+
     // Heartbeat log
     const triggered = distance <= snapshot.distanceThresholdMeters;
     logHeartbeat(snapshot.sessionId, distance, coords.accuracy, triggered);
@@ -99,6 +139,15 @@ export async function processBackgroundLocationUpdate(
       await scheduleAlarmNotification({
         title: 'Durağa yaklaşıyorsun!',
         body: `${snapshot.targetName} durağına yaklaştın.`,
+      });
+      
+      // Diagnostic: NOTIFICATION_FIRED
+      diagLog(snapshot.sessionId, {
+        level: 'info',
+        type: 'NOTIFICATION_FIRED',
+        msg: 'Alarm notification fired',
+      }).catch(() => {
+        // Ignore diagnostic errors
       });
 
       // Snapshot'ı TRIGGERED olarak güncelle (lokal)

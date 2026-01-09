@@ -13,6 +13,9 @@ import { scheduleAlarmNotification } from '../../services/alarmService';
 import PrimaryButton from '../../components/common/PrimaryButton';
 import { readCrashLog, clearCrashLog, CrashLogEntry } from '../../utils/crashLog';
 import { formatDate } from '../../utils/date';
+import { getLastSessionId, diagGet, diagSummarize, diagClearAll } from '../../services/alarmDiagnostics';
+import { Alert, Share } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 
 type Props = NativeStackScreenProps<SettingsStackParamList, 'Diagnostics'>;
 
@@ -20,6 +23,8 @@ const DiagnosticsScreen = ({ navigation }: Props) => {
   const { colors } = useAppTheme();
   const [loading, setLoading] = useState(true);
   const [diagnostics, setDiagnostics] = useState<any>(null);
+  const [alarmDiagSummary, setAlarmDiagSummary] = useState<string | null>(null);
+  const [alarmDiagLoading, setAlarmDiagLoading] = useState(false);
 
   useEffect(() => {
     loadDiagnostics();
@@ -70,6 +75,19 @@ const DiagnosticsScreen = ({ navigation }: Props) => {
       // Last crash log
       const lastCrash = await readCrashLog();
 
+      // Alarm diagnostics
+      const lastSessionId = await getLastSessionId();
+      let alarmDiagSummaryText: string | null = null;
+      if (lastSessionId) {
+        try {
+          alarmDiagSummaryText = await diagSummarize(lastSessionId);
+        } catch (error) {
+          if (__DEV__) {
+            console.warn('[DiagnosticsScreen] Alarm diag summary failed:', error);
+          }
+        }
+      }
+
       setDiagnostics({
         deviceInfo,
         permissions: {
@@ -88,7 +106,9 @@ const DiagnosticsScreen = ({ navigation }: Props) => {
         },
         activeAlarm: snapshot,
         lastCrash,
+        lastAlarmSessionId: lastSessionId,
       });
+      setAlarmDiagSummary(alarmDiagSummaryText);
     } catch (error) {
       if (__DEV__) {
         console.warn('[DiagnosticsScreen] Load hatası', error);
@@ -96,6 +116,64 @@ const DiagnosticsScreen = ({ navigation }: Props) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCopyAlarmDiag = async () => {
+    if (!alarmDiagSummary) {
+      return;
+    }
+    try {
+      await Clipboard.setStringAsync(alarmDiagSummary);
+      Alert.alert('Başarılı', 'Diagnostik bilgileri kopyalandı.');
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('[DiagnosticsScreen] Copy failed:', error);
+      }
+      Alert.alert('Hata', 'Kopyalama başarısız oldu.');
+    }
+  };
+
+  const handleShareAlarmDiag = async () => {
+    if (!alarmDiagSummary) {
+      return;
+    }
+    try {
+      await Share.share({
+        message: alarmDiagSummary,
+        title: 'Alarm Diagnostik Bilgileri',
+      });
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('[DiagnosticsScreen] Share failed:', error);
+      }
+    }
+  };
+
+  const handleClearAlarmDiag = async () => {
+    Alert.alert(
+      'Temizle',
+      'Tüm alarm diagnostik verilerini silmek istediğinizden emin misiniz?',
+      [
+        { text: 'İptal', style: 'cancel' },
+        {
+          text: 'Temizle',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await diagClearAll();
+              setAlarmDiagSummary(null);
+              await loadDiagnostics();
+              Alert.alert('Başarılı', 'Diagnostik veriler temizlendi.');
+            } catch (error) {
+              if (__DEV__) {
+                console.warn('[DiagnosticsScreen] Clear failed:', error);
+              }
+              Alert.alert('Hata', 'Temizleme başarısız oldu.');
+            }
+          },
+        },
+      ],
+    );
   };
 
   const handleTestNotification = async () => {
@@ -373,6 +451,85 @@ const DiagnosticsScreen = ({ navigation }: Props) => {
               </>
             ) : (
               <Text style={{ color: colors.textMuted }}>Kayıt yok</Text>
+            )}
+          </View>
+
+          {/* Alarm Diagnostics */}
+          <View style={{ marginBottom: 24 }}>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 12 }}>
+              Son Alarm Diagnostiği
+            </Text>
+            {diagnostics.lastAlarmSessionId ? (
+              <>
+                <Text style={{ color: colors.text, marginBottom: 8 }}>
+                  Session ID: {diagnostics.lastAlarmSessionId}
+                </Text>
+                {alarmDiagSummary ? (
+                  <>
+                    <ScrollView
+                      style={{
+                        backgroundColor: colors.cardBackground || '#f5f5f5',
+                        padding: 12,
+                        borderRadius: 8,
+                        maxHeight: 300,
+                        marginBottom: 12,
+                      }}
+                    >
+                      <Text
+                        selectable
+                        style={{
+                          color: colors.text,
+                          fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+                          fontSize: 12,
+                        }}
+                      >
+                        {alarmDiagSummary}
+                      </Text>
+                    </ScrollView>
+                    <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap' }}>
+                      <TouchableOpacity
+                        onPress={handleCopyAlarmDiag}
+                        style={{
+                          paddingVertical: 8,
+                          paddingHorizontal: 16,
+                          borderRadius: 8,
+                          backgroundColor: colors.primary,
+                        }}
+                      >
+                        <Text style={{ color: colors.white, fontWeight: '600' }}>Kopyala</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={handleShareAlarmDiag}
+                        style={{
+                          paddingVertical: 8,
+                          paddingHorizontal: 16,
+                          borderRadius: 8,
+                          backgroundColor: colors.gray800,
+                        }}
+                      >
+                        <Text style={{ color: colors.white, fontWeight: '600' }}>Paylaş</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={handleClearAlarmDiag}
+                        style={{
+                          paddingVertical: 8,
+                          paddingHorizontal: 16,
+                          borderRadius: 8,
+                          backgroundColor: colors.danger,
+                        }}
+                      >
+                        <Text style={{ color: colors.white, fontWeight: '600' }}>Temizle</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                ) : (
+                  <Text style={{ color: colors.textMuted, marginBottom: 12 }}>
+                    Diagnostik özeti yükleniyor...
+                  </Text>
+                )}
+              </>
+            ) : (
+              <Text style={{ color: colors.textMuted }}>Henüz alarm diagnostik verisi yok</Text>
             )}
           </View>
 

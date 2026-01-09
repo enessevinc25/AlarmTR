@@ -20,6 +20,7 @@ import { useAlarm } from '../../context/AlarmContext';
 import { HomeStackParamList } from '../../navigation/navigationTypes';
 import { goToPermissionsHelp, goToSamsungBatteryHelp } from '../../navigation/navigationService';
 import { useAppTheme } from '../../theme/useAppTheme';
+import { diagLog } from '../../services/alarmDiagnostics';
 import { AlarmSession, TransitStop, UserTarget } from '../../types/models';
 import { getUserTargetById } from '../../services/stopsService';
 import { fetchStopById } from '../../services/transitProvider';
@@ -212,7 +213,18 @@ const ActiveAlarmScreen = ({ route, navigation }: Props) => {
       try {
         const stored = await AsyncStorage.getItem(BATTERY_WARNING_SHOWN_KEY);
         if (mounted) {
-          setShowBatteryWarning(stored !== 'true');
+          const shouldShow = stored !== 'true';
+          setShowBatteryWarning(shouldShow);
+          // Diagnostic log
+          if (shouldShow && alarmSessionId) {
+            diagLog(alarmSessionId, {
+              level: 'warn',
+              type: 'WARNING_BATTERY_OPTIMIZATION',
+              msg: 'Battery optimization warning shown',
+            }).catch(() => {
+              // Ignore diagnostic errors
+            });
+          }
         }
       } catch (error) {
         if (__DEV__) {
@@ -311,6 +323,16 @@ const ActiveAlarmScreen = ({ route, navigation }: Props) => {
             setBackgroundTrackingEnabled(false);
             // Kullanıcıya küçük bir uyarı göster
             setBackgroundPermissionWarning(true);
+            // Diagnostic log
+            if (alarmSessionId) {
+              diagLog(alarmSessionId, {
+                level: 'warn',
+                type: 'WARNING_BG_PERMISSION',
+                msg: 'Background location permission not granted',
+              }).catch(() => {
+                // Ignore diagnostic errors
+              });
+            }
           } else {
             // Diğer hatalar: logla ama foreground tracking devam etsin
             if (__DEV__) {

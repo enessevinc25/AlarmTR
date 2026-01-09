@@ -4,6 +4,7 @@ import { handleBackgroundLocationUpdate } from './alarmBackgroundService';
 import { processBackgroundLocationUpdate } from './alarmBackgroundCore';
 import { areNativeModulesAvailable, isExpoGo } from '../utils/expoEnvironment';
 import { captureError } from '../utils/errorReporting';
+import { diagLog, getActiveAlarmSessionId } from './alarmDiagnostics';
 
 export const LOCATION_TASK_NAME = 'LASTSTOP_LOCATION_TASK';
 export const GEOFENCE_TASK_NAME = 'LASTSTOP_GEOFENCE_TASK';
@@ -25,11 +26,23 @@ try {
     TaskManager.defineTask(
       LOCATION_TASK_NAME,
       async ({ data, error }: any) => {
+        const sessionId = await getActiveAlarmSessionId();
+        
         if (error) {
           if (__DEV__) {
             console.error('Location task error:', error);
           }
           captureError(error, 'locationService/taskError');
+          if (sessionId) {
+            diagLog(sessionId, {
+              level: 'error',
+              type: 'ERROR',
+              msg: `Location task error: ${String(error?.message ?? error)}`,
+              data: { code: (error as any)?.code },
+            }).catch(() => {
+              // Ignore diagnostic errors
+            });
+          }
           return;
         }
         const { locations } = (data as LocationTaskData) ?? {};
@@ -37,6 +50,18 @@ try {
           return;
         }
         const latest = locations[locations.length - 1];
+        
+        // Diagnostic: TASK_TICK
+        if (sessionId) {
+          diagLog(sessionId, {
+            level: 'info',
+            type: 'TASK_TICK',
+            data: { source: 'location_task' },
+          }).catch(() => {
+            // Ignore diagnostic errors
+          });
+        }
+        
         await handleBackgroundLocationUpdate({
           latitude: latest.coords.latitude,
           longitude: latest.coords.longitude,

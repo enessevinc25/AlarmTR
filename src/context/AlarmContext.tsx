@@ -32,6 +32,7 @@ import {
   isLocalSessionId,
   PendingAlarmSessionCreate,
 } from '../services/offlineQueueService';
+import { diagStart, diagStop, diagLog, diagSummarize } from '../services/alarmDiagnostics';
 
 interface AlarmContextValue {
   activeAlarmSessionId: string | null;
@@ -460,6 +461,14 @@ export const AlarmProvider = ({ children }: { children: ReactNode }) => {
           setActiveAlarmSession(localSession);
           await persistActiveAlarmSnapshot(localSession);
 
+          // Diagnostic başlat (P0)
+          await diagStart(localSession.id);
+          await diagLog(localSession.id, {
+            level: 'info',
+            type: 'TASK_REGISTERED',
+            msg: 'Offline alarm start flow completed',
+          });
+
           if (__DEV__) {
             console.log('[AlarmContext] Offline modda alarm session oluşturuldu:', localSessionId);
           }
@@ -550,6 +559,45 @@ export const AlarmProvider = ({ children }: { children: ReactNode }) => {
   const markAlarmTriggered: AlarmContextValue['markAlarmTriggered'] = useCallback(
     async (alarmSessionId) => {
       try {
+        // Diagnostic summary oluştur ve durdur
+        try {
+          const summary = await diagSummarize(alarmSessionId);
+          await diagLog(alarmSessionId, {
+            level: 'info',
+            type: 'NOTIFICATION_FIRED',
+            msg: 'Alarm triggered',
+          });
+          await diagStop(alarmSessionId, 'triggered');
+          
+          // Summary'yi Firestore'a yaz (eğer remote session ise)
+          if (!isLocalSessionId(alarmSessionId)) {
+            const diagSession = await import('../services/alarmDiagnostics').then(m => m.diagGet(alarmSessionId));
+            if (diagSession) {
+              await updateDoc(doc(db, 'alarmSessions', alarmSessionId), {
+                status: 'TRIGGERED',
+                triggeredAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+                diag: {
+                  summary,
+                  counters: diagSession.counters,
+                  lastUpdatedAt: diagSession.lastUpdatedAt,
+                },
+              });
+            } else {
+              await updateDoc(doc(db, 'alarmSessions', alarmSessionId), {
+                status: 'TRIGGERED',
+                triggeredAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+              });
+            }
+          }
+        } catch (diagError) {
+          if (__DEV__) {
+            console.warn('[AlarmContext] Diagnostic summary failed:', diagError);
+          }
+          // Diagnostic hatası alarm tetiklemeyi engellemesin
+        }
+
         // Local session kontrolü: Firestore update yapma
         if (isLocalSessionId(alarmSessionId)) {
           // Local state'i TRIGGERED yap ve persist et
@@ -561,12 +609,7 @@ export const AlarmProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
 
-        // Remote session: Firestore'a yaz
-        await updateDoc(doc(db, 'alarmSessions', alarmSessionId), {
-          status: 'TRIGGERED',
-          triggeredAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        });
+        // Remote session: Firestore'a yaz (yukarıda diag ile birlikte yazıldı)
         if (activeAlarmSessionId === alarmSessionId && activeAlarmSession) {
           const nextSession = { ...activeAlarmSession, status: 'TRIGGERED' as AlarmStatus };
           setActiveAlarmSession(nextSession);
