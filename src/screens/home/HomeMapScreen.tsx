@@ -176,14 +176,20 @@ const HomeMapScreen = ({ route, navigation }: Props) => {
   // Google Maps API key kontrolü (debug için)
   useEffect(() => {
     if (__DEV__) {
-      const config = require('../../../app.config.ts').default({ config: {} });
-      const androidKey = config.android?.config?.googleMaps?.apiKey || 'NOT SET';
-      const iosKey = config.ios?.config?.googleMapsApiKey || 'NOT SET';
+      // Runtime'da Constants.expoConfig üzerinden erişilmeli (app.config.ts build-time'da çalışır)
+      const config = Constants.expoConfig;
+      const androidKey = config?.android?.config?.googleMaps?.apiKey || 'NOT SET';
+      const iosKey = config?.ios?.config?.googleMapsApiKey || 'NOT SET';
+      const extra = (config?.extra as any) ?? {};
+      
       console.log('[HomeMap] Google Maps API Keys:', {
-        android: androidKey.substring(0, 20) + '...',
-        ios: iosKey.substring(0, 20) + '...',
+        android: androidKey === 'NOT SET' ? 'NOT SET' : androidKey.substring(0, 20) + '...',
+        ios: iosKey === 'NOT SET' ? 'NOT SET' : iosKey.substring(0, 20) + '...',
         canUseMaps,
         MapViewAvailable: !!MapView,
+        hasAndroidKeyFromExtra: !!extra.hasGoogleMapsAndroidKey,
+        hasIOSKeyFromExtra: !!extra.hasGoogleMapsIOSKey,
+        hasWebKeyFromExtra: !!extra.hasGoogleWebKey,
       });
     }
   }, []);

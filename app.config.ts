@@ -39,16 +39,20 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     }
   } else {
     // Non-production build'lerde warning verip devam et
+    // Local development için .env dosyasına eklenmeli, EAS Build için EAS Secrets kullanılır
+    const isLocalDev = !process.env.EAS_BUILD_PLATFORM;
+    const keySource = isLocalDev ? '.env dosyasına' : 'EAS Secrets\'a';
+    
     if (!googleMapsKeyAndroid && process.env.EAS_BUILD_PLATFORM !== 'ios') {
       console.warn(
-        '⚠️  WARNING: EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID eksik. Harita blank olabilir. ' +
-        'EAS Secrets\'a ekleyin: EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID'
+        `⚠️  WARNING: EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID eksik. Harita blank olabilir. ` +
+        `${keySource} ekleyin: EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID`
       );
     }
     if (!googleMapsKeyIOS && process.env.EAS_BUILD_PLATFORM !== 'android') {
       console.warn(
-        '⚠️  WARNING: EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS eksik. Harita blank olabilir. ' +
-        'EAS Secrets\'a ekleyin: EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS'
+        `⚠️  WARNING: EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS eksik. Harita blank olabilir. ` +
+        `${keySource} ekleyin: EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS`
       );
     }
   }
