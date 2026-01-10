@@ -10,27 +10,27 @@ Aşağıdaki secrets'ları [Expo Dashboard](https://expo.dev/) üzerinden ekleyi
 
 ### 1. Firebase API Key
 - **Name**: `EXPO_PUBLIC_FIREBASE_API_KEY`
-- **Value**: `AIzaSyCS75soGEExQaePqbblpEDIBaB43bePIDs`
+- **Value**: `AIzaSy...PIDs` (Firebase Console'dan alın)
 - **Type**: String
-- **Visibility**: Secret
+- **Visibility**: Sensitive (EXPO_PUBLIC_ prefix'li değişkenler secret olamaz)
 
 ### 2. Firebase Storage Bucket
 - **Name**: `EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET`
-- **Value**: `laststop-alarm-tr-38d76.firebasestorage.app`
+- **Value**: `your-project.firebasestorage.app` (Firebase Console'dan alın)
 - **Type**: String
-- **Visibility**: Secret
+- **Visibility**: Sensitive
 
 ### 3. Google Maps API Key (Android)
 - **Name**: `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID`
-- **Value**: `AIzaSyAVU7hqKkF7p3yHIFn_ykwJG2PTTIMyg2g`
+- **Value**: `AIzaSy...yg2g` (Google Cloud Console'dan alın - Maps SDK for Android)
 - **Type**: String
-- **Visibility**: Secret
+- **Visibility**: Sensitive
 
 ### 4. Google Maps API Key (iOS)
 - **Name**: `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS`
-- **Value**: `AIzaSyDsm7bYfryNWjJppXCYGHGvYBhFjcMXR0w`
+- **Value**: `AIzaSy...XR0w` (Google Cloud Console'dan alın - Maps SDK for iOS)
 - **Type**: String
-- **Visibility**: Secret
+- **Visibility**: Sensitive
 
 ### 5. Environment
 - **Name**: `EXPO_PUBLIC_ENVIRONMENT`
@@ -61,11 +61,11 @@ npx eas env:list --scope project
 
 Veya Expo Dashboard'dan **Secrets** sekmesinde tüm secrets'ları görebilirsiniz.
 
-## 🔄 Alternatif: eas.json ile Geçici Çözüm
+## ✅ Durum
 
-Eğer EAS Secrets ekleyemiyorsanız, `eas.json` dosyasındaki `production` profili içindeki `env` bölümüne secrets'ları ekledim. Bu geçici bir çözümdür ve production build'lerde çalışacaktır.
+**Tüm secrets EAS'ta mevcut!** Production, preview ve development environment'lar için gerekli tüm değişkenler EAS Secrets'ta tanımlı.
 
-**Not**: `eas.json` dosyasındaki secrets'lar git'e commit edilmemelidir (güvenlik riski). Ancak şu an için production build'lerin çalışması için ekledim. İleride EAS Secrets'a taşımanız önerilir.
+**ÖNEMLİ:** `eas.json` dosyasında artık API key'ler yok. Tüm key'ler EAS Secrets'ta güvenli şekilde saklanıyor.
 
 ## 📝 Notlar
 
