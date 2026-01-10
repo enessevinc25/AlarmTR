@@ -182,6 +182,11 @@ const HomeMapScreen = ({ route, navigation }: Props) => {
       const iosKey = config?.ios?.config?.googleMapsApiKey || 'NOT SET';
       const extra = (config?.extra as any) ?? {};
       
+      // Environment detection
+      const executionEnv = Constants.executionEnvironment;
+      const isExpoGoCheck = isExpoGoEnv;
+      const nativeModulesAvailable = areNativeModulesAvailable();
+      
       console.log('[HomeMap] Google Maps API Keys:', {
         android: androidKey === 'NOT SET' ? 'NOT SET' : androidKey.substring(0, 20) + '...',
         ios: iosKey === 'NOT SET' ? 'NOT SET' : iosKey.substring(0, 20) + '...',
@@ -190,6 +195,14 @@ const HomeMapScreen = ({ route, navigation }: Props) => {
         hasAndroidKeyFromExtra: !!extra.hasGoogleMapsAndroidKey,
         hasIOSKeyFromExtra: !!extra.hasGoogleMapsIOSKey,
         hasWebKeyFromExtra: !!extra.hasGoogleWebKey,
+        // Debug info
+        executionEnvironment: executionEnv,
+        isExpoGoEnv: isExpoGoCheck,
+        nativeModulesAvailable: nativeModulesAvailable,
+        // Env vars check
+        envAndroidKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID ? 'SET' : 'NOT SET',
+        envIOSKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS ? 'SET' : 'NOT SET',
+        envWebKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ? 'SET' : 'NOT SET',
       });
     }
   }, []);
