@@ -148,6 +148,14 @@ const AlarmDetailsScreen = ({ route, navigation }: Props) => {
     const fetchTarget = async () => {
       setLoading(true);
       setError(null);
+      
+      // targetId kontrolü
+      if (!targetId) {
+        setError('Hedef ID eksik.');
+        setLoading(false);
+        return;
+      }
+      
       try {
         const data =
           targetType === 'STOP' ? await fetchStopById(targetId) : await getUserTargetById(targetId);
@@ -155,11 +163,18 @@ const AlarmDetailsScreen = ({ route, navigation }: Props) => {
           setError('Hedef bulunamadı');
         }
         setTarget(data);
-      } catch (err) {
+      } catch (err: any) {
         if (__DEV__) {
-          console.warn(err);
+          console.warn('[AlarmDetailsScreen] fetchTarget error:', err);
         }
-        setError('Hedef bilgileri alınamadı.');
+        captureError(err, 'AlarmDetailsScreen/fetchTarget');
+        
+        // Firestore permission hatası kontrolü
+        if (err?.code === 'permission-denied' || err?.message?.includes('permission')) {
+          setError('Bu işlem için giriş yapmanız gerekiyor.');
+        } else {
+          setError('Hedef bilgileri alınamadı.');
+        }
       } finally {
         setLoading(false);
       }

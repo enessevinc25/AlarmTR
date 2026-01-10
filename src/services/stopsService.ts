@@ -70,13 +70,24 @@ export async function getStopById(stopId: string): Promise<TransitStop | null> {
 }
 
 export async function getUserTargetById(targetId: string) {
-  const ref = doc(db, USER_TARGETS_COLLECTION, targetId);
-  const snapshot = await getDoc(ref);
-  if (!snapshot.exists()) {
-    return null;
+  if (!targetId) {
+    throw new Error('Target ID is required');
   }
-  const data = snapshot.data() as Omit<UserTarget, 'id'>;
-  return { id: snapshot.id, ...data };
+  try {
+    const ref = doc(db, USER_TARGETS_COLLECTION, targetId);
+    const snapshot = await getDoc(ref);
+    if (!snapshot.exists()) {
+      return null;
+    }
+    const data = snapshot.data() as Omit<UserTarget, 'id'>;
+    return { id: snapshot.id, ...data };
+  } catch (error: any) {
+    // Firestore permission denied hatası için daha açıklayıcı hata mesajı
+    if (error?.code === 'permission-denied' || error?.message?.includes('permission')) {
+      throw new Error('Bu hedefe erişim için giriş yapmanız gerekiyor.');
+    }
+    throw error;
+  }
 }
 
 export async function createUserTarget(

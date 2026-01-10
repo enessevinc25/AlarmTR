@@ -670,17 +670,17 @@ const HomeMapScreen = ({ route, navigation }: Props) => {
               // Handle marker press - if it's a stop preview, navigate to AlarmDetails
               const handleMarkerPress = () => {
                 try {
-                  if (mode === 'STOP_PREVIEW' && stop) {
+                  if (mode === 'STOP_PREVIEW' && stop && stop.id) {
                     // Log stop pick from map
                     logEvent('STOP_PICK_FROM_MAP', {
-                      stopIdHash: stop.id ? (() => {
+                      stopIdHash: (() => {
                         let hash = 2166136261;
                         for (let i = 0; i < stop.id.length; i++) {
                           hash ^= stop.id.charCodeAt(i);
                           hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
                         }
                         return (hash >>> 0).toString(16).padStart(8, '0');
-                      })() : undefined,
+                      })(),
                     });
                     
                     // Navigate to AlarmDetails
@@ -688,6 +688,13 @@ const HomeMapScreen = ({ route, navigation }: Props) => {
                       targetType: 'STOP',
                       targetId: stop.id,
                     });
+                  } else if (mode === 'STOP_PREVIEW' && stop && !stop.id) {
+                    // Stop ID yoksa hata logla ve kullanıcıya bilgi ver
+                    if (__DEV__) {
+                      console.warn('[HomeMap] Stop ID missing, cannot navigate to AlarmDetails');
+                    }
+                    captureError(new Error('Stop ID is missing'), 'HomeMap/handleMarkerPress/missingStopId');
+                    Alert.alert('Hata', 'Durak bilgisi eksik. Lütfen tekrar deneyin.');
                   } else if (mode === 'PLACE_PREVIEW' && place) {
                     // For place preview, show alert or navigate
                     Alert.alert(

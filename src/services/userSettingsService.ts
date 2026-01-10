@@ -24,7 +24,14 @@ export async function getUserAlarmPreferences(userId: string): Promise<UserAlarm
         data.defaultTransportMode ?? DEFAULT_PREFERENCES.defaultTransportMode,
       defaultMinutesBefore: data.defaultMinutesBefore ?? DEFAULT_PREFERENCES.defaultMinutesBefore,
     };
-  } catch (error) {
+  } catch (error: any) {
+    // Firestore permission denied hatası için default preferences döndür
+    if (error?.code === 'permission-denied' || error?.message?.includes('permission')) {
+      if (__DEV__) {
+        console.warn('[userSettingsService] Permission denied, returning default preferences');
+      }
+      return DEFAULT_PREFERENCES;
+    }
     captureError(error, 'userSettingsService/getUserAlarmPreferences');
     throw error;
   }
