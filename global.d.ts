@@ -2,6 +2,7 @@
  * Global type definitions for React Native and Expo
  */
 
+// eslint-disable-next-line no-var
 declare var __DEV__: boolean;
 
 // Node.js globals for build-time code
@@ -27,21 +28,31 @@ declare namespace NodeJS {
   }
 }
 
+// eslint-disable-next-line no-var
 declare var process: {
   env: NodeJS.ProcessEnv;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 };
 
+// eslint-disable-next-line no-var
 declare var require: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (id: string): any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   cache: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   main: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   extensions: any;
   resolve: (id: string) => string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 };
 
+// eslint-disable-next-line no-var
 declare var global: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 };
 
@@ -62,6 +73,7 @@ declare module 'sentry-expo' {
   }
 
   export interface Native {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     captureException(error: Error, context?: any): void;
   }
 

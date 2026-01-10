@@ -24,6 +24,7 @@ import {
   type AccuracyState,
 } from './alarmAccuracyEngine';
 import { getFeatureFlag } from './featureFlags';
+import { logEvent } from './telemetry';
 
 const PENDING_SYNC_EVENTS_KEY = '@laststop/pendingSyncEvents';
 const HEARTBEAT_LOG_KEY = '@laststop/heartbeatLog';
@@ -167,6 +168,13 @@ export async function processBackgroundLocationUpdate(
       // Ignore diagnostic errors
     });
 
+    // Telemetry: Distance update
+    logEvent('DISTANCE_UPDATE', {
+      distanceMetersRounded: distanceRounded,
+      radiusMeters: snapshot.distanceThresholdMeters,
+      accuracyBucket,
+    });
+
     // Heartbeat log (eski format korunuyor, backward compatibility için)
     logHeartbeat(snapshot.sessionId, distance, coords.accuracy, decision.shouldTrigger);
 
@@ -178,6 +186,14 @@ export async function processBackgroundLocationUpdate(
       if (snapshot.status !== 'ACTIVE') {
         return { triggered: false, distance };
       }
+
+      // Telemetry: Trigger decision
+      logEvent('TRIGGER_DECISION', {
+        source: 'location',
+        distanceMetersRounded: distanceRounded,
+        radiusMeters: snapshot.distanceThresholdMeters,
+        accuracyBucket,
+      });
 
       // Notification gönder (Android: seconds:1 + channelId)
       await scheduleAlarmNotification({

@@ -21,7 +21,7 @@ const AlarmTriggeredScreen = ({ route, navigation }: Props) => {
   const { activeAlarmSession, refreshAlarmSession, clearActiveAlarm } = useAlarm();
   const [session, setSession] = useState<AlarmSession | null>(null);
   const [target, setTarget] = useState<TransitStop | UserTarget | null>(null);
-  const alarmIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const alarmIntervalRef = useRef<number | null>(null);
 
   useEffect(() => {
     const load = async () => {

@@ -35,6 +35,17 @@ import {
 import { diagStart, diagStop, diagLog, diagSummarize } from '../services/alarmDiagnostics';
 import { ensureLocationTrackingForAlarm, stopLocationTrackingForAlarm } from '../services/alarmSurvivalService';
 import { resumeTrackingIfNeeded } from '../services/alarmResumeService';
+import { logEvent, setAlarmSessionId } from '../services/telemetry';
+
+// Simple hash for stopId
+function hashStopId(stopId: string): string {
+  let hash = 2166136261;
+  for (let i = 0; i < stopId.length; i++) {
+    hash ^= stopId.charCodeAt(i);
+    hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
 
 interface AlarmContextValue {
   activeAlarmSessionId: string | null;
@@ -500,8 +511,19 @@ export const AlarmProvider = ({ children }: { children: ReactNode }) => {
             msg: 'Offline alarm start flow completed',
           });
 
+          // Telemetry logging
+          setAlarmSessionId(localSession.id);
+          logEvent('ALARM_SESSION_START', {
+            stopIdHash: hashStopId(targetId),
+            radiusMeters: distanceThresholdMeters,
+            startedInside: false, // TODO: calculate if user is inside radius
+          });
+
           // Foreground service ile location tracking başlat (Android)
-          await ensureLocationTrackingForAlarm(localSession.id).catch((error) => {
+          await ensureLocationTrackingForAlarm(localSession.id).then(() => {
+            logEvent('TRACKING_START', { success: true });
+          }).catch((error) => {
+            logEvent('TRACKING_START', { success: false }, 'error');
             if (__DEV__) {
               console.warn('[AlarmContext] Failed to start location tracking (offline):', error);
             }
@@ -551,8 +573,19 @@ export const AlarmProvider = ({ children }: { children: ReactNode }) => {
         setActiveAlarmSession(session);
         await persistActiveAlarmSnapshot(session);
 
+        // Telemetry logging
+        setAlarmSessionId(session.id);
+        logEvent('ALARM_SESSION_START', {
+          stopIdHash: hashStopId(targetId),
+          radiusMeters: distanceThresholdMeters,
+          startedInside: false, // TODO: calculate if user is inside radius
+        });
+
         // Foreground service ile location tracking başlat (Android)
-        await ensureLocationTrackingForAlarm(session.id).catch((error) => {
+        await ensureLocationTrackingForAlarm(session.id).then(() => {
+          logEvent('TRACKING_START', { success: true });
+        }).catch((error) => {
+          logEvent('TRACKING_START', { success: false }, 'error');
           if (__DEV__) {
             console.warn('[AlarmContext] Failed to start location tracking:', error);
           }
@@ -584,11 +617,18 @@ export const AlarmProvider = ({ children }: { children: ReactNode }) => {
           await clearStoredActiveAlarm();
           
           // Location tracking'i durdur (Android)
-          await stopLocationTrackingForAlarm(alarmSessionId).catch((error) => {
+          await stopLocationTrackingForAlarm(alarmSessionId).then(() => {
+            logEvent('TRACKING_STOP', { success: true });
+          }).catch((error) => {
+            logEvent('TRACKING_STOP', { success: false }, 'error');
             if (__DEV__) {
               console.warn('[AlarmContext] Failed to stop location tracking (local):', error);
             }
           });
+          
+          // Telemetry logging
+          logEvent('ALARM_SESSION_STOP', { reason: 'user_stop' });
+          setAlarmSessionId(undefined);
           return;
         }
 
@@ -604,11 +644,18 @@ export const AlarmProvider = ({ children }: { children: ReactNode }) => {
         await clearStoredActiveAlarm();
 
         // Location tracking'i durdur (Android)
-        await stopLocationTrackingForAlarm(alarmSessionId).catch((error) => {
+        await stopLocationTrackingForAlarm(alarmSessionId).then(() => {
+          logEvent('TRACKING_STOP', { success: true });
+        }).catch((error) => {
+          logEvent('TRACKING_STOP', { success: false }, 'error');
           if (__DEV__) {
             console.warn('[AlarmContext] Failed to stop location tracking:', error);
           }
         });
+        
+        // Telemetry logging
+        logEvent('ALARM_SESSION_STOP', { reason: 'user_stop' });
+        setAlarmSessionId(undefined);
       } catch (error) {
         captureError(error, 'AlarmContext/cancelAlarmSession');
         throw error;
@@ -629,6 +676,11 @@ export const AlarmProvider = ({ children }: { children: ReactNode }) => {
             msg: 'Alarm triggered',
           });
           await diagStop(alarmSessionId, 'triggered');
+          
+          // Telemetry logging
+          logEvent('ALARM_TRIGGERED', { source: 'location' });
+          logEvent('ALARM_SESSION_STOP', { reason: 'triggered' });
+          setAlarmSessionId(undefined);
           
           // Summary'yi Firestore'a yaz (eğer remote session ise)
           if (!isLocalSessionId(alarmSessionId)) {

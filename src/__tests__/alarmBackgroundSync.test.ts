@@ -11,8 +11,9 @@ import {
   clearPendingSyncEvents,
   PendingSyncEvent,
 } from '../services/alarmBackgroundCore';
-import { db } from '../services/firebase';
 import { isLocalSessionId } from '../services/offlineQueueService';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { captureError } from '../utils/errorReporting';
 
 // Mocks
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -51,7 +52,6 @@ describe('alarmBackgroundSync', () => {
 
       await syncPendingEventsToFirestore();
 
-      const { getDoc, updateDoc } = require('firebase/firestore');
       expect(getDoc).not.toHaveBeenCalled();
       expect(updateDoc).not.toHaveBeenCalled();
     });
@@ -67,7 +67,6 @@ describe('alarmBackgroundSync', () => {
       ];
       (getPendingSyncEvents as jest.Mock).mockResolvedValue(mockEvents);
 
-      const { doc, getDoc, updateDoc, serverTimestamp } = require('firebase/firestore');
       const mockDocRef = {};
       const mockDocSnap = {
         exists: () => true,
@@ -102,7 +101,6 @@ describe('alarmBackgroundSync', () => {
       ];
       (getPendingSyncEvents as jest.Mock).mockResolvedValue(mockEvents);
 
-      const { doc, getDoc, updateDoc } = require('firebase/firestore');
       const mockDocRef = {};
       const mockDocSnap = {
         exists: () => true,
@@ -130,7 +128,6 @@ describe('alarmBackgroundSync', () => {
       ];
       (getPendingSyncEvents as jest.Mock).mockResolvedValue(mockEvents);
 
-      const { doc, getDoc, updateDoc } = require('firebase/firestore');
       const mockDocRef = {};
       const mockDocSnap = {
         exists: () => false, // Session yok
@@ -156,7 +153,6 @@ describe('alarmBackgroundSync', () => {
       ];
       (getPendingSyncEvents as jest.Mock).mockResolvedValue(mockEvents);
 
-      const { doc, getDoc, updateDoc, serverTimestamp } = require('firebase/firestore');
       const mockDocRef = {};
       const mockDocSnap = {
         exists: () => true,
@@ -190,7 +186,6 @@ describe('alarmBackgroundSync', () => {
       ];
       (getPendingSyncEvents as jest.Mock).mockResolvedValue(mockEvents);
 
-      const { doc, getDoc, updateDoc } = require('firebase/firestore');
       const mockDocRef = {};
       const mockDocSnap = {
         exists: () => true,
@@ -218,8 +213,6 @@ describe('alarmBackgroundSync', () => {
       (getPendingSyncEvents as jest.Mock).mockResolvedValue(mockEvents);
       (isLocalSessionId as jest.Mock).mockReturnValue(true);
 
-      const { doc, getDoc, updateDoc } = require('firebase/firestore');
-
       await syncPendingEventsToFirestore();
 
       expect(getDoc).not.toHaveBeenCalled();
@@ -239,12 +232,9 @@ describe('alarmBackgroundSync', () => {
       ];
       (getPendingSyncEvents as jest.Mock).mockResolvedValue(mockEvents);
 
-      const { doc, getDoc } = require('firebase/firestore');
       const mockDocRef = {};
       (doc as jest.Mock).mockReturnValue(mockDocRef);
       (getDoc as jest.Mock).mockRejectedValue(new Error('Network error'));
-
-      const { captureError } = require('../utils/errorReporting');
 
       await syncPendingEventsToFirestore();
 
@@ -271,7 +261,6 @@ describe('alarmBackgroundSync', () => {
       ];
       (getPendingSyncEvents as jest.Mock).mockResolvedValue(mockEvents);
 
-      const { doc, getDoc, updateDoc } = require('firebase/firestore');
       const mockDocRef1 = {};
       const mockDocRef2 = {};
       const mockDocSnap = {

@@ -224,7 +224,7 @@ async function makeRequest<T>(
   url: URL,
   cacheKey: string,
   controller: AbortController,
-  timeoutId: NodeJS.Timeout,
+  timeoutId: number,
   timeoutMs: number,
   baseUrl: string
 ): Promise<T> {

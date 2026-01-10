@@ -25,7 +25,11 @@ import { captureError } from '../../utils/errorReporting';
 import { colors, spacing, borderRadius } from '../../theme/colors';
 import { useAppTheme } from '../../theme/useAppTheme';
 import { isExpoGo, areNativeModulesAvailable } from '../../utils/expoEnvironment';
+import { logEvent } from '../../services/telemetry';
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import { haversineDistance } from '../../utils/mapClustering';
+import { goToAlarmDetails } from '../../navigation/navigationService';
 // Asset import - TypeScript doesn't have built-in type for image imports in React Native
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const appIcon = require('../../../assets/icon.png');
@@ -134,6 +138,40 @@ const HomeMapScreen = ({ route, navigation }: Props) => {
   const { user } = useAuth();
   const { activeAlarmSession } = useAlarm();
   const mapRef = useRef<any>(null);
+  const mapMountTimeRef = useRef<number | null>(null);
+  const regionChangeThrottleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mapReadyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mapReadyLoggedRef = useRef<boolean>(false);
+  
+  // Map mount logging
+  useEffect(() => {
+    if (!isExpoGoEnv && canUseMaps && MapView) {
+      mapMountTimeRef.current = Date.now();
+      mapReadyLoggedRef.current = false;
+      const extra = (Constants.expoConfig?.extra as any) ?? {};
+      logEvent('MAP_MOUNT', {
+        provider: 'google',
+        platform: Platform.OS,
+        hasAndroidKey: extra.hasGoogleMapsAndroidKey ?? false,
+        hasIOSKey: extra.hasGoogleMapsIOSKey ?? false,
+        hasWebKey: extra.hasGoogleWebKey ?? false,
+      });
+      
+      // Timeout check: if MAP_READY doesn't come within 8 seconds, log error
+      mapReadyTimeoutRef.current = setTimeout(() => {
+        if (!mapReadyLoggedRef.current) {
+          logEvent('MAP_ERROR', { reason: 'timeout_no_ready' }, 'warn');
+        }
+      }, 8000) as ReturnType<typeof setTimeout>;
+    }
+    
+    return () => {
+      if (mapReadyTimeoutRef.current) {
+        clearTimeout(mapReadyTimeoutRef.current);
+        mapReadyTimeoutRef.current = null;
+      }
+    };
+  }, []);
   
   // Google Maps API key kontrolü (debug için)
   useEffect(() => {
@@ -326,7 +364,14 @@ const HomeMapScreen = ({ route, navigation }: Props) => {
     return markers;
   }, [longPressMarker, mode, selectedPlaceMarker, stop, place]);
 
-  const clusteredMarkers = useMemo<Cluster[]>(() => clusterMarkers(baseMarkers, 350), [baseMarkers]);
+  const clusteredMarkers = useMemo<Cluster[]>(() => {
+    const clusters = clusterMarkers(baseMarkers, 350);
+    // Log markers render
+    if (!isExpoGoEnv && canUseMaps && MapView) {
+      logEvent('MAP_MARKERS_RENDER', { count: clusters.length });
+    }
+    return clusters;
+  }, [baseMarkers]);
 
   const handleLongPress = async (event: LongPressEvent) => {
     if (!user) {
@@ -551,7 +596,21 @@ const HomeMapScreen = ({ route, navigation }: Props) => {
             ref={mapRef}
             style={StyleSheet.absoluteFill}
             region={region}
-            onRegionChangeComplete={setRegion}
+            onRegionChangeComplete={(newRegion: Region) => {
+              setRegion(newRegion);
+              // Throttle region change logging (2s)
+              if (regionChangeThrottleRef.current) {
+                clearTimeout(regionChangeThrottleRef.current);
+                regionChangeThrottleRef.current = null;
+              }
+              regionChangeThrottleRef.current = setTimeout(() => {
+                logEvent('MAP_REGION_CHANGE', {
+                  zoomApprox: Math.round(1 / newRegion.latitudeDelta),
+                  moved: true,
+                });
+                regionChangeThrottleRef.current = null;
+              }, 2000) as ReturnType<typeof setTimeout>;
+            }}
             showsUserLocation
             onLongPress={handleLongPress}
             mapType="standard"
@@ -562,11 +621,24 @@ const HomeMapScreen = ({ route, navigation }: Props) => {
                 console.error('[HomeMap] MapView error details:', JSON.stringify(error, null, 2));
               }
               captureError(error, 'HomeMap/MapView');
+              logEvent('MAP_ERROR', {
+                messageShort: error?.message?.substring(0, 100) || 'Unknown error',
+              }, 'error');
             }}
             onMapReady={() => {
               if (__DEV__) {
                 console.log('[HomeMap] MapView ready');
               }
+              // Clear timeout since MAP_READY arrived
+              if (mapReadyTimeoutRef.current) {
+                clearTimeout(mapReadyTimeoutRef.current);
+                mapReadyTimeoutRef.current = null;
+              }
+              mapReadyLoggedRef.current = true;
+              const msFromMount = mapMountTimeRef.current
+                ? Date.now() - mapMountTimeRef.current
+                : undefined;
+              logEvent('MAP_READY', { msFromMount });
             }}
           >
             {/* Kümeleme uygulanmış marker'lar */}
@@ -595,11 +667,73 @@ const HomeMapScreen = ({ route, navigation }: Props) => {
                 );
               }
               const marker = cluster.markers[0];
+              // Handle marker press - if it's a stop preview, navigate to AlarmDetails
+              const handleMarkerPress = () => {
+                try {
+                  if (mode === 'STOP_PREVIEW' && stop) {
+                    // Log stop pick from map
+                    logEvent('STOP_PICK_FROM_MAP', {
+                      stopIdHash: stop.id ? (() => {
+                        let hash = 2166136261;
+                        for (let i = 0; i < stop.id.length; i++) {
+                          hash ^= stop.id.charCodeAt(i);
+                          hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+                        }
+                        return (hash >>> 0).toString(16).padStart(8, '0');
+                      })() : undefined,
+                    });
+                    
+                    // Navigate to AlarmDetails
+                    goToAlarmDetails({
+                      targetType: 'STOP',
+                      targetId: stop.id,
+                    });
+                  } else if (mode === 'PLACE_PREVIEW' && place) {
+                    // For place preview, show alert or navigate
+                    Alert.alert(
+                      'Özel Hedef',
+                      'Bu konumdan alarm kurmak ister misiniz?',
+                      [
+                        { text: 'İptal', style: 'cancel' },
+                        {
+                          text: 'Alarm Kur',
+                          onPress: async () => {
+                            if (!user) {
+                              Alert.alert('Giriş gerekli', 'Alarm kurmak için önce giriş yapmalısın.');
+                              return;
+                            }
+                            try {
+                              const target = await createUserTarget(user.uid, {
+                                name: place.name,
+                                lat: place.latitude,
+                                lon: place.longitude,
+                                radiusMeters: 400,
+                              });
+                              goToAlarmDetails({
+                                targetType: 'CUSTOM',
+                                targetId: target.id,
+                                defaultDistanceMeters: target.radiusMeters,
+                              });
+                            } catch (error) {
+                              captureError(error, 'HomeMap/markerPress/createTarget');
+                              Alert.alert('Hata', 'Alarm kurulurken bir hata oluştu.');
+                            }
+                          },
+                        },
+                      ],
+                    );
+                  }
+                } catch (error) {
+                  captureError(error, 'HomeMap/handleMarkerPress');
+                }
+              };
+              
               return (
                 <Marker
                   key={marker.id}
                   coordinate={{ latitude: marker.latitude, longitude: marker.longitude }}
                   title={marker.title}
+                  onPress={handleMarkerPress}
                 />
               );
             })}

@@ -10,13 +10,16 @@
  */
 
 import { initializeTestEnvironment, RulesTestEnvironment } from '@firebase/rules-unit-testing';
-import { getFirestore, connectFirestoreEmulator, Firestore } from 'firebase/firestore';
-import { getAuth, connectAuthEmulator, Auth } from 'firebase/auth';
-import { initializeApp, getApps, deleteApp, FirebaseApp } from 'firebase/app';
+import { Firestore } from 'firebase/firestore';
+import { Auth } from 'firebase/auth';
+import { deleteApp, FirebaseApp } from 'firebase/app';
 
 let testEnv: RulesTestEnvironment | null = null;
+// eslint-disable-next-line prefer-const
 let app: FirebaseApp | null = null;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, prefer-const
 let auth: Auth | null = null;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, prefer-const
 let db: Firestore | null = null;
 
 // Test verileri
@@ -215,6 +218,7 @@ describe('Firestore Security Rules', () => {
       });
 
       // Try to read as userA
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const userADb = testEnv.authenticatedContext(testUserA.uid).firestore();
       await expect(sessionRef.get()).rejects.toThrow();
     });

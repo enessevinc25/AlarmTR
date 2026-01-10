@@ -15,7 +15,6 @@ module.exports = {
     },
   },
   env: {
-    'react-native/react-native': true,
     es6: true,
     node: true,
   },
@@ -25,9 +24,10 @@ module.exports = {
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/no-explicit-any': 'warn',
     '@typescript-eslint/no-non-null-assertion': 'warn',
+    '@typescript-eslint/no-var-requires': ['error', { allow: ['sentry-expo'] }], // Allow require for conditional imports
     
     // General
-    'no-console': ['warn', { allow: ['warn', 'error'] }],
+    'no-console': ['warn', { allow: ['warn', 'error', 'log'] }], // Allow console.log for debugging
     'no-debugger': 'error',
     'prefer-const': 'warn',
     'no-var': 'error',
@@ -37,6 +37,10 @@ module.exports = {
     'react/prop-types': 'off', // Using TypeScript for prop validation
     'react-hooks/exhaustive-deps': 'warn',
     'react-hooks/rules-of-hooks': 'error',
+    
+    // Import resolution (disable for functions directory - Firebase Functions has different module resolution)
+    'import/no-unresolved': ['error', { ignore: ['firebase-functions'] }],
+    'import/namespace': 'off', // Disable for functions directory
   },
   ignorePatterns: [
     'node_modules/',
@@ -48,5 +52,6 @@ module.exports = {
     'dist/',
     'build/',
     'scripts/',
+    'functions/', // Firebase Functions has different module resolution
   ],
 };

@@ -1,6 +1,7 @@
 import { CommonActions } from '@react-navigation/native';
 import { navigationRef } from './navigationRef';
 import { HomeStackParamList, RootStackParamList } from './navigationTypes';
+import { StartAlarmSessionParams } from '../context/AlarmContext';
 
 /**
  * Navigation service for cross-tab navigation

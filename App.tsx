@@ -28,16 +28,21 @@ import { initializeNotifications } from './src/services/alarmService';
 import { isExpoGo } from './src/utils/expoEnvironment';
 import { getTransitApiBaseUrl } from './src/utils/env';
 import { installGlobalErrorHandlers } from './src/utils/installGlobalErrorHandlers';
+import { telemetryInit, logEvent, setCurrentScreen, flushTelemetry } from './src/services/telemetry';
+import { AppState, AppStateStatus } from 'react-native';
+import { useRef } from 'react';
 
 // Sentry initialization - Expo Go'da bazı sorunlar çıkarabilir, bu yüzden try-catch ile sarmalıyoruz
 type SentryModule = {
   init: (options: { dsn?: string; enableInExpoDevelopment?: boolean; debug?: boolean; environment?: string }) => void;
   Native: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     captureException: (error: Error, context?: any) => void;
   };
 };
 let Sentry: SentryModule | null = null;
 try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   Sentry = require('sentry-expo') as SentryModule;
   // isExpoGo() modül seviyesinde çağrılamayabilir, bu yüzden try-catch ile sarmalıyoruz
   let isExpoGoEnv = false;
@@ -70,6 +75,31 @@ function AppContent() {
   const [notificationPermissionGranted, setNotificationPermissionGranted] = useState<
     boolean | null
   >(null);
+  const lastRouteNameRef = useRef<string | null>(null);
+  
+  // Initialize telemetry
+  useEffect(() => {
+    telemetryInit();
+  }, []);
+
+  // AppState listener for background/foreground
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', async (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'background') {
+        logEvent('APP_BACKGROUND');
+        // Flush telemetry when going to background
+        await flushTelemetry().catch(() => {
+          // Ignore flush errors
+        });
+      } else if (nextAppState === 'active') {
+        logEvent('APP_FOREGROUND');
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
   
   // Global error handler'ları kur (ilk mount'ta bir kere)
   useEffect(() => {
@@ -122,6 +152,7 @@ function AppContent() {
       const transitApiUrl = getTransitApiBaseUrl();
       console.log('[App] Environment check - Transit API URL:', transitApiUrl);
       
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const constantsExtra = Constants.expoConfig?.extra as any;
       console.log('[App] Environment check - Constants.expoConfig.extra:', {
         transitApiBaseUrl: constantsExtra?.transitApiBaseUrl || 'hardcoded',
@@ -133,6 +164,7 @@ function AppContent() {
         EXPO_PUBLIC_ENVIRONMENT: process.env.EXPO_PUBLIC_ENVIRONMENT || 'NOT SET',
         EXPO_PUBLIC_GOOGLE_MAPS_API_KEY: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ? 'SET' : 'NOT SET',
       });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('[App] Environment check hatası:', error?.message);
       // Hata olsa bile uygulamayı çalıştırmaya devam et
@@ -185,7 +217,25 @@ function AppContent() {
               <AlarmSettingsProvider>
                 <AlarmProvider>
                   <OfflineBanner />
-                  <NavigationContainer ref={navigationRef} theme={navigationTheme}>
+                  <NavigationContainer
+                    ref={navigationRef}
+                    theme={navigationTheme}
+                    onReady={() => {
+                      logEvent('APP_READY');
+                    }}
+                    onStateChange={() => {
+                      const route = navigationRef.getCurrentRoute();
+                      if (route) {
+                        const routeName = route.name;
+                        // Dedupe: only log if route changed
+                        if (lastRouteNameRef.current !== routeName) {
+                          lastRouteNameRef.current = routeName;
+                          setCurrentScreen(routeName);
+                          logEvent('SCREEN_VIEW', { route: routeName });
+                        }
+                      }
+                    }}
+                  >
                     <StatusBar style={isDark ? 'light' : 'dark'} />
                     <RootNavigator />
                   </NavigationContainer>

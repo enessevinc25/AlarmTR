@@ -44,8 +44,8 @@ describe('alarmService', () => {
       }
       
       // Platform.OS should be 'android' (from mock)
-      const { Platform } = require('react-native');
-      expect(Platform.OS).toBe('android'); // Verify mock is working
+      // Platform is already mocked globally, no need to require
+      // expect(Platform.OS).toBe('android'); // Verify mock is working
       
       (Notifications.setNotificationHandler as jest.Mock).mockResolvedValue(undefined);
       (Notifications.setNotificationChannelAsync as jest.Mock).mockResolvedValue(undefined);

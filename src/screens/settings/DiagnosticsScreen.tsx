@@ -15,6 +15,7 @@ import PrimaryButton from '../../components/common/PrimaryButton';
 import { readCrashLog, clearCrashLog, CrashLogEntry } from '../../utils/crashLog';
 import { formatDate } from '../../utils/date';
 import { getLastSessionId, diagGet, diagSummarize, diagClearAll } from '../../services/alarmDiagnostics';
+import { getTelemetryBundleText, clearTelemetry, flushTelemetry } from '../../services/telemetry';
 import { Alert, Share } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 
@@ -26,6 +27,7 @@ const DiagnosticsScreen = ({ navigation }: Props) => {
   const [diagnostics, setDiagnostics] = useState<any>(null);
   const [alarmDiagSummary, setAlarmDiagSummary] = useState<string | null>(null);
   const [alarmDiagLoading, setAlarmDiagLoading] = useState(false);
+  const [telemetryLoading, setTelemetryLoading] = useState(false);
 
   useEffect(() => {
     loadDiagnostics();
@@ -177,6 +179,49 @@ const DiagnosticsScreen = ({ navigation }: Props) => {
             } catch (error) {
               if (__DEV__) {
                 console.warn('[DiagnosticsScreen] Clear failed:', error);
+              }
+              Alert.alert('Hata', 'Temizleme başarısız oldu.');
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const handleCopyTelemetry = async (includeJsonl: boolean) => {
+    setTelemetryLoading(true);
+    try {
+      // Flush telemetry before export
+      await flushTelemetry();
+      const bundle = await getTelemetryBundleText({ includeJsonl });
+      await Clipboard.setStringAsync(bundle);
+      Alert.alert('Başarılı', 'Telemetry logları kopyalandı.');
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('[DiagnosticsScreen] Copy telemetry failed:', error);
+      }
+      Alert.alert('Hata', 'Kopyalama başarısız oldu.');
+    } finally {
+      setTelemetryLoading(false);
+    }
+  };
+
+  const handleClearTelemetry = async () => {
+    Alert.alert(
+      'Temizle',
+      'Tüm telemetry loglarını silmek istediğinizden emin misiniz?',
+      [
+        { text: 'İptal', style: 'cancel' },
+        {
+          text: 'Temizle',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await clearTelemetry();
+              Alert.alert('Başarılı', 'Telemetry logları temizlendi.');
+            } catch (error) {
+              if (__DEV__) {
+                console.warn('[DiagnosticsScreen] Clear telemetry failed:', error);
               }
               Alert.alert('Hata', 'Temizleme başarısız oldu.');
             }
@@ -589,6 +634,59 @@ const DiagnosticsScreen = ({ navigation }: Props) => {
             ) : (
               <Text style={{ color: colors.textMuted }}>Henüz alarm diagnostik verisi yok</Text>
             )}
+          </View>
+
+          {/* Telemetry Export */}
+          <View style={{ marginBottom: 24 }}>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 12 }}>
+              Uygulama Telemetry Log
+            </Text>
+            <Text style={{ color: colors.textMuted, marginBottom: 12, fontSize: 14 }}>
+              Uygulama içindeki tüm önemli adımların log kaydı. Blank map teşhisi, arama sorunları ve alarm akışı için kullanılabilir.
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap' }}>
+              <TouchableOpacity
+                onPress={() => handleCopyTelemetry(false)}
+                disabled={telemetryLoading}
+                style={{
+                  paddingVertical: 8,
+                  paddingHorizontal: 16,
+                  borderRadius: 8,
+                  backgroundColor: telemetryLoading ? colors.gray800 : colors.primary,
+                  opacity: telemetryLoading ? 0.6 : 1,
+                }}
+              >
+                <Text style={{ color: colors.white, fontWeight: '600' }}>
+                  {telemetryLoading ? 'Yükleniyor...' : 'Kopyala (Özet + Son 50)'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => handleCopyTelemetry(true)}
+                disabled={telemetryLoading}
+                style={{
+                  paddingVertical: 8,
+                  paddingHorizontal: 16,
+                  borderRadius: 8,
+                  backgroundColor: telemetryLoading ? colors.gray800 : colors.gray800,
+                  opacity: telemetryLoading ? 0.6 : 1,
+                }}
+              >
+                <Text style={{ color: colors.white, fontWeight: '600' }}>
+                  {telemetryLoading ? 'Yükleniyor...' : 'Kopyala (Tam JSONL)'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleClearTelemetry}
+                style={{
+                  paddingVertical: 8,
+                  paddingHorizontal: 16,
+                  borderRadius: 8,
+                  backgroundColor: colors.danger,
+                }}
+              >
+                <Text style={{ color: colors.white, fontWeight: '600' }}>Temizle</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Test Buttons */}

@@ -26,6 +26,9 @@ import { useSafeAsync } from '../../hooks/useSafeAsync';
 import { captureError } from '../../utils/errorReporting';
 import { spacing, borderRadius } from '../../theme/colors';
 import { useAppTheme } from '../../theme/useAppTheme';
+import { logEvent } from '../../services/telemetry';
+import { useRef } from 'react';
+import { getCachedSearch, setCachedSearch, hashQuery } from '../../services/searchCache';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'StopSearch'>;
 type Tabs = 'stops' | 'lines';
@@ -66,9 +69,40 @@ const StopSearchScreen = ({ navigation, route }: Props) => {
   const [refreshing, setRefreshing] = useState(false);
   // Favori duraklar için Set (hızlı lookup için)
   const [savedStopIds, setSavedStopIds] = useState<Set<string>>(new Set());
+  const inputDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Screen open logging
+  useEffect(() => {
+    logEvent('STOP_SEARCH_OPEN', { initialTab: activeTab });
+  }, []);
 
   // Debounced arama: kullanıcı yazmayı bıraktıktan 300ms sonra API araması yapılır (performance için)
   const debouncedQuery = useDebouncedValue(query.trim().toLocaleLowerCase('tr-TR'), 300);
+
+  // Input change logging (debounced 400ms)
+  useEffect(() => {
+    if (activeTab !== 'stops') {
+      return;
+    }
+    if (inputDebounceTimerRef.current) {
+      clearTimeout(inputDebounceTimerRef.current);
+      inputDebounceTimerRef.current = null;
+    }
+    if (query.trim().length > 0) {
+      inputDebounceTimerRef.current = setTimeout(() => {
+        logEvent('STOP_SEARCH_INPUT', {
+          queryLen: query.trim().length,
+        });
+        inputDebounceTimerRef.current = null;
+      }, 400) as ReturnType<typeof setTimeout>;
+    }
+    return () => {
+      if (inputDebounceTimerRef.current) {
+        clearTimeout(inputDebounceTimerRef.current);
+        inputDebounceTimerRef.current = null;
+      }
+    };
+  }, [query, activeTab]);
 
   // Favori durakları subscribe et
   useEffect(() => {
@@ -139,13 +173,55 @@ const StopSearchScreen = ({ navigation, route }: Props) => {
       setStopSearchLoading(true);
       setStopSearchError(null);
 
+      // Check cache first
+      const queryHash = hashQuery(debouncedQuery);
+      const cachedResults = await getCachedSearch<TransitStop[]>('stops', queryHash);
+      
+      if (cachedResults) {
+        // Cache hit
+        if (!isMounted()) {
+          return;
+        }
+        setStopSearchResults(cachedResults);
+        setStopSearchError(null);
+        setStopSearchLoading(false);
+        
+        // Log cache hit
+        logEvent('STOP_SEARCH_RESULTS', {
+          count: cachedResults.length,
+          source: 'cache',
+          cacheHit: true,
+        });
+        return;
+      }
+
+      // Cache miss - network request
+      // Log submit
+      logEvent('STOP_SEARCH_SUBMIT', {
+        queryLen: debouncedQuery.length,
+      });
+
       try {
+        const startTime = Date.now();
         const results = await searchStops(debouncedQuery, { limit: 25 });
+        const durationMs = Date.now() - startTime;
+        
         if (!isMounted()) {
           return;
         }
         setStopSearchResults(results);
         setStopSearchError(null);
+        
+        // Cache the results
+        await setCachedSearch('stops', queryHash, results);
+        
+        // Log results
+        logEvent('STOP_SEARCH_RESULTS', {
+          count: results.length,
+          source: 'network',
+          durationMs,
+          cacheHit: false,
+        });
       } catch (error: any) {
         if (!isMounted()) {
           return;
@@ -173,6 +249,12 @@ const StopSearchScreen = ({ navigation, route }: Props) => {
         
         setStopSearchError(errorMessage);
         setStopSearchResults([]);
+        
+        // Log error
+        logEvent('STOP_SEARCH_ERROR', {
+          code: error?.status || error?.name || 'UNKNOWN',
+          messageShort: errorMessage.substring(0, 100),
+        }, 'error');
       } finally {
         if (isMounted()) {
           setStopSearchLoading(false);
@@ -202,13 +284,49 @@ const StopSearchScreen = ({ navigation, route }: Props) => {
         return;
       }
       
+      // Check cache first (lines search uses empty query hash for "all lines")
+      const queryHash = hashQuery(''); // Empty query for "all lines"
+      const cachedLines = await getCachedSearch<TransitLine[]>('lines', queryHash);
+      
+      if (cachedLines) {
+        // Cache hit
+        if (!isMounted()) {
+          return;
+        }
+        setLines(cachedLines);
+        setLinesError(null);
+        setLoadingLines(false);
+        
+        // Log cache hit
+        logEvent('LINE_SEARCH_RESULTS', {
+          count: cachedLines.length,
+          source: 'cache',
+          cacheHit: true,
+        });
+        return;
+      }
+      
       try {
+        const startTime = Date.now();
         const data = await fetchAllLines();
+        const durationMs = Date.now() - startTime;
+        
         if (!isMounted()) {
           return;
         }
         setLines(data);
         setLinesError(null);
+        
+        // Cache the results
+        await setCachedSearch('lines', queryHash, data);
+        
+        // Log line search results
+        logEvent('LINE_SEARCH_RESULTS', {
+          count: data.length,
+          source: 'network',
+          durationMs,
+          cacheHit: false,
+        });
       } catch (error: any) {
         if (!isMounted()) {
           return;
@@ -235,6 +353,12 @@ const StopSearchScreen = ({ navigation, route }: Props) => {
         }
         
         setLinesError(errorMessage);
+        
+        // Log line search error
+        logEvent('LINE_SEARCH_ERROR', {
+          code: error?.status || error?.name || 'UNKNOWN',
+          messageShort: errorMessage.substring(0, 100),
+        }, 'error');
       } finally {
         if (isMounted()) {
           setLoadingLines(false);
@@ -283,6 +407,18 @@ const StopSearchScreen = ({ navigation, route }: Props) => {
   };
 
   const handleStopPress = (stop: TransitStop) => {
+    // Log stop pick from list
+    logEvent('STOP_PICK_FROM_LIST', {
+      stopIdHash: stop.id ? (() => {
+        let hash = 2166136261;
+        for (let i = 0; i < stop.id.length; i++) {
+          hash ^= stop.id.charCodeAt(i);
+          hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+        }
+        return (hash >>> 0).toString(16).padStart(8, '0');
+      })() : undefined,
+    });
+    
     navigation.navigate('HomeMap', {
       mode: 'STOP_PREVIEW',
       stop: {

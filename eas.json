@@ -27,7 +27,7 @@
         "simulator": true
       },
       "env": {
-        "EXPO_PUBLIC_ENVIRONMENT": "production"
+        "EXPO_PUBLIC_ENVIRONMENT": "staging"
       }
     },
     "preview": {
@@ -53,11 +53,7 @@
         "simulator": false
       },
       "env": {
-        "EXPO_PUBLIC_ENVIRONMENT": "production",
-        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyCS75soGEExQaePqbblpEDIBaB43bePIDs",
-        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "laststop-alarm-tr-38d76.firebasestorage.app",
-        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID": "AIzaSyAVU7hqKkF7p3yHIFn_ykwJG2PTTIMyg2g",
-        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS": "AIzaSyDsm7bYfryNWjJppXCYGHGvYBhFjcMXR0w"
+        "EXPO_PUBLIC_ENVIRONMENT": "production"
       }
     }
   },

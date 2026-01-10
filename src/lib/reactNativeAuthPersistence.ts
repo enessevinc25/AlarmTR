@@ -10,7 +10,7 @@ export function getReactNativePersistence(storage: ReactNativeAsyncStorage): any
   const STORAGE_AVAILABLE_KEY = '__laststop_auth_check';
 
   return class Persistence {
-    static type: 'LOCAL' = 'LOCAL';
+    static type = 'LOCAL' as const;
     readonly type = 'LOCAL' as const;
 
     async _isAvailable(): Promise<boolean> {

@@ -21,9 +21,12 @@ jest.mock('sentry-expo', () => ({
 // Note: alarmService.test.ts mocks react-native entirely, so this won't affect it
 // This is for other tests that use Platform.select
 try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const RN = require('react-native');
   if (RN.Platform && typeof RN.Platform.select === 'function') {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const originalSelect = RN.Platform.select;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     RN.Platform.select = jest.fn((obj: any) => {
       // obj.android varsa onu dön, yoksa obj.default veya obj.ios
       return obj.android ?? obj.default ?? obj.ios ?? null;

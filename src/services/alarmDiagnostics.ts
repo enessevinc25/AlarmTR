@@ -174,7 +174,7 @@ async function createSnapshot(sessionId: string): Promise<Record<string, any>> {
       },
       permissions: {
         notifications: {
-          granted: notifPerms.granted || notifPerms.status === 'granted',
+          granted: notifPerms.granted || ('status' in notifPerms && notifPerms.status === 'granted'),
           canAskAgain: notifPerms.canAskAgain ?? true,
         },
         locationForeground: {

@@ -14,13 +14,15 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   const googleMapsKeyIOS = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS ?? '';
   const googleWebKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ?? '';
   
-  // Build-time guard: Preview/Production build'lerde native key yoksa build FAIL et
-  const isNonDevBuild = (process.env.EXPO_PUBLIC_ENVIRONMENT ?? config?.extra?.environment) !== 'development';
+  // Build-time guard: Sadece production build'lerde native key yoksa build FAIL et
+  // Standalone ve preview build'lerde warning verip devam et (test için)
+  const isProductionBuild = (process.env.EXPO_PUBLIC_ENVIRONMENT ?? config?.extra?.environment) === 'production';
   
   // EAS build sırasında platform tespiti için process.env.EAS_BUILD_PLATFORM kullanılabilir
   // Ama expo config çalıştırıldığında bu henüz set olmayabilir
   // Bu yüzden her iki platform için de kontrol ediyoruz
-  if (isNonDevBuild) {
+  // NOT: Production build'de key kontrolü strict, diğerlerinde warning
+  if (isProductionBuild) {
     // Android build kontrolü (EAS build'de platform-specific kontrol yapılabilir)
     // Şimdilik her iki key'i de kontrol ediyoruz (build-time'da hangi platform olduğu belli değil)
     if (!googleMapsKeyAndroid && process.env.EAS_BUILD_PLATFORM !== 'ios') {
@@ -33,6 +35,20 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       throw new Error(
         'Missing EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS => Standalone IPA\'de harita blank olur. ' +
         'EAS Secrets\'a EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS ekleyin (Maps SDK for iOS).'
+      );
+    }
+  } else {
+    // Non-production build'lerde warning verip devam et
+    if (!googleMapsKeyAndroid && process.env.EAS_BUILD_PLATFORM !== 'ios') {
+      console.warn(
+        '⚠️  WARNING: EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID eksik. Harita blank olabilir. ' +
+        'EAS Secrets\'a ekleyin: EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID'
+      );
+    }
+    if (!googleMapsKeyIOS && process.env.EAS_BUILD_PLATFORM !== 'android') {
+      console.warn(
+        '⚠️  WARNING: EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS eksik. Harita blank olabilir. ' +
+        'EAS Secrets\'a ekleyin: EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS'
       );
     }
   }

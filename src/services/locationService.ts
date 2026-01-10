@@ -5,9 +5,13 @@ import { processBackgroundLocationUpdate } from './alarmBackgroundCore';
 import { areNativeModulesAvailable, isExpoGo } from '../utils/expoEnvironment';
 import { captureError } from '../utils/errorReporting';
 import { diagLog, getActiveAlarmSessionId } from './alarmDiagnostics';
+import { logEvent } from './telemetry';
 
 export const LOCATION_TASK_NAME = 'LASTSTOP_LOCATION_TASK';
 export const GEOFENCE_TASK_NAME = 'LASTSTOP_GEOFENCE_TASK';
+
+// Throttle counter for LOCATION_TASK_TICK (log every 3 ticks)
+let locationTaskTickCounter = 0;
 
 type LocationTaskData = {
   locations?: Location.LocationObject[];
@@ -59,6 +63,24 @@ try {
             data: { source: 'location_task' },
           }).catch(() => {
             // Ignore diagnostic errors
+          });
+        }
+        
+        // Telemetry: LOCATION_TASK_TICK (throttled - every 3 ticks)
+        locationTaskTickCounter++;
+        if (locationTaskTickCounter >= 3) {
+          locationTaskTickCounter = 0;
+          const accuracyBucket = latest.coords.accuracy
+            ? latest.coords.accuracy < 25
+              ? 'high'
+              : latest.coords.accuracy <= 80
+                ? 'mid'
+                : 'low'
+            : 'unknown';
+          logEvent('LOCATION_TASK_TICK', {
+            hasLocations: true,
+            count: locations.length,
+            accuracyBucket,
           });
         }
         

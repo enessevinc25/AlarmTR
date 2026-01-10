@@ -49,6 +49,7 @@ export interface UserTarget {
   lon: number;
   radiusMeters: number;
   createdAt: TimestampLike;
+  updatedAt?: TimestampLike;
 }
 
 export type AlarmStatus = 'ACTIVE' | 'CANCELLED' | 'TRIGGERED';

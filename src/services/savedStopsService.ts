@@ -3,6 +3,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   onSnapshot,
   orderBy,
@@ -13,6 +14,17 @@ import {
 import { db } from './firebase';
 import { captureError } from '../utils/errorReporting';
 import { TransitStop, UserSavedStop } from '../types/models';
+import { logEvent } from './telemetry';
+
+// Simple hash for stopId
+function hashStopId(stopId: string): string {
+  let hash = 2166136261;
+  for (let i = 0; i < stopId.length; i++) {
+    hash ^= stopId.charCodeAt(i);
+    hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
 
 const COLLECTION = 'userSavedStops';
 
@@ -71,6 +83,11 @@ export async function addSavedStop(userId: string, stop: TransitStop): Promise<U
     };
     const ref = await addDoc(collection(db, COLLECTION), payload);
 
+    // Log favorite add
+    logEvent('FAVORITE_ADD', {
+      stopIdHash: hashStopId(stop.id),
+    });
+
     return {
       id: ref.id,
       userId: payload.userId,
@@ -87,15 +104,42 @@ export async function addSavedStop(userId: string, stop: TransitStop): Promise<U
     };
   } catch (error) {
     captureError(error, 'savedStopsService/addSavedStop');
+    logEvent('FAVORITES_ERROR', {
+      code: (error as any)?.code || 'UNKNOWN',
+      messageShort: (error as any)?.message?.substring(0, 100) || 'Unknown error',
+    }, 'error');
     throw error;
   }
 }
 
 export async function removeSavedStop(savedStopId: string): Promise<void> {
   try {
+    // Get stopId before deleting for logging
+    let stopIdHash: string | undefined;
+    try {
+      const stopDocSnap = await getDoc(doc(db, COLLECTION, savedStopId));
+      if (stopDocSnap.exists()) {
+        const stopId = stopDocSnap.data().stopId;
+        if (stopId) {
+          stopIdHash = hashStopId(stopId);
+        }
+      }
+    } catch {
+      // Ignore read errors, just proceed with delete
+    }
+    
     await deleteDoc(doc(db, COLLECTION, savedStopId));
+    
+    // Log favorite remove
+    if (stopIdHash) {
+      logEvent('FAVORITE_REMOVE', { stopIdHash });
+    }
   } catch (error) {
     captureError(error, 'savedStopsService/removeSavedStop');
+    logEvent('FAVORITES_ERROR', {
+      code: (error as any)?.code || 'UNKNOWN',
+      messageShort: (error as any)?.message?.substring(0, 100) || 'Unknown error',
+    }, 'error');
     throw error;
   }
 }
@@ -104,7 +148,7 @@ export async function listUserSavedStops(userId: string): Promise<UserSavedStop[
   try {
     const q = query(collection(db, COLLECTION), where('userId', '==', userId));
     const snap = await getDocs(q);
-    return snap.docs
+    const stops = snap.docs
       .map((docSnap) => {
         try {
           const data = docSnap.data();
@@ -154,8 +198,17 @@ export async function listUserSavedStops(userId: string): Promise<UserSavedStop[
         }
       })
       .filter((stop): stop is UserSavedStop => stop !== null && stop !== undefined);
+    
+    // Log favorites load
+    logEvent('FAVORITES_LOAD', { count: stops.length });
+    
+    return stops;
   } catch (error) {
     captureError(error, 'savedStopsService/listUserSavedStops');
+    logEvent('FAVORITES_ERROR', {
+      code: (error as any)?.code || 'UNKNOWN',
+      messageShort: (error as any)?.message?.substring(0, 100) || 'Unknown error',
+    }, 'error');
     throw error;
   }
 }
@@ -249,6 +302,9 @@ export function subscribeUserSavedStops(
             return bTime - aTime; // desc order
           });
           
+          // Log favorites load (on subscription)
+          logEvent('FAVORITES_LOAD', { count: stops.length });
+          
           callback(stops);
         } catch (mapError) {
           if (__DEV__) {
@@ -314,6 +370,9 @@ export async function toggleUserSavedStop(userId: string, stop: TransitStop): Pr
       return;
     }
 
+    // Handle both lineIds and lines fields (TransitStop can have either)
+    const resolvedLineIds = stop.lineIds ?? stop.lines ?? [];
+    
     const payload = {
       userId,
       stopId: stop.id,
@@ -322,14 +381,23 @@ export async function toggleUserSavedStop(userId: string, stop: TransitStop): Pr
       longitude: stop.longitude,
       addressDescription: stop.addressDescription ?? null,
       city: stop.city ?? null,
-      lineIds: stop.lineIds ?? [],
+      lineIds: resolvedLineIds,
       defaultDistanceMeters: stop.radiusMeters ?? 400,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
     await addDoc(collection(db, COLLECTION), payload);
+    
+    // Log favorite add
+    logEvent('FAVORITE_ADD', {
+      stopIdHash: hashStopId(stop.id),
+    });
   } catch (error) {
     captureError(error, 'savedStopsService/toggleUserSavedStop');
+    logEvent('FAVORITES_ERROR', {
+      code: (error as any)?.code || 'UNKNOWN',
+      messageShort: (error as any)?.message?.substring(0, 100) || 'Unknown error',
+    }, 'error');
     throw error;
   }
 }

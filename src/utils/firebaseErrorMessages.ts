@@ -42,8 +42,7 @@ export function getFirebaseErrorMessage(error: any): string {
       return 'Geçersiz şifre. Şifre en az 6 karakter olmalı.';
 
     // Şifre sıfırlama hataları
-    case 'auth/user-not-found':
-      return 'Bu e-posta adresi ile kayıtlı bir hesap bulunamadı.';
+    // Note: 'auth/user-not-found' already handled above
     case 'auth/invalid-action-code':
       return 'Geçersiz veya süresi dolmuş şifre sıfırlama bağlantısı.';
 

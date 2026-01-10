@@ -17,6 +17,7 @@ import {
 } from '../services/authService';
 import { auth } from '../services/firebase';
 import { captureError } from '../utils/errorReporting';
+import { logEvent } from '../services/telemetry';
 
 interface AuthContextValue {
   user: User | null;
@@ -43,6 +44,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
           setUser(nextUser);
           setInitializing(false);
+          // Log auth state change
+          logEvent('AUTH_STATE', {
+            state: nextUser ? 'SIGNED_IN' : 'SIGNED_OUT',
+          });
         } catch (error) {
           if (__DEV__) {
             console.warn('[AuthContext] Auth state callback hatası', error);

@@ -17,7 +17,7 @@ describe('SkeletonLoader', () => {
 
   it('should render SkeletonCard', () => {
     const { UNSAFE_getByType } = render(<SkeletonCard />);
-    // @ts-ignore - UNSAFE_getByType accepts string for component type
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const component = UNSAFE_getByType('View' as any);
     expect(component).toBeTruthy();
   });
