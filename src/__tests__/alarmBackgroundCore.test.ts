@@ -251,10 +251,10 @@ describe('alarmBackgroundCore', () => {
       // - fetch/axios/XMLHttpRequest
       // - Any network-related modules
       
-      // For now, we just verify the module can be required without errors
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      // Dynamic import not needed - already imported at top
-      expect(coreModule).toBeDefined();
+      // Module is already imported at top, verify exports exist
+      expect(processBackgroundLocationUpdate).toBeDefined();
+      expect(getPendingSyncEvents).toBeDefined();
+      expect(clearPendingSyncEvents).toBeDefined();
     });
   });
 
