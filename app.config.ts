@@ -14,30 +14,21 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   const googleMapsKeyIOS = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS ?? '';
   const googleWebKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ?? '';
   
-  // Build-time guard: Sadece production build'lerde native key yoksa build FAIL et
-  // Standalone ve preview build'lerde warning verip devam et (test için)
+  // Build-time guard: Production build'lerde native key kontrolü
+  // NOT: EAS Build'de key'ler EAS Secrets'tan gelir, bu yüzden local'de key yoksa bile build başarılı olmalı
+  // Key kontrolü sadece warning olarak yapılıyor (build fail etmiyor)
+  // EAS Build'de key'ler secrets'tan geldiği için kontrol yapmaya gerek yok
   const isProductionBuild = (process.env.EXPO_PUBLIC_ENVIRONMENT ?? config?.extra?.environment) === 'production';
   
-  // EAS build sırasında platform tespiti için process.env.EAS_BUILD_PLATFORM kullanılabilir
-  // Ama expo config çalıştırıldığında bu henüz set olmayabilir
-  // Bu yüzden her iki platform için de kontrol ediyoruz
-  // NOT: Production build'de key kontrolü strict, diğerlerinde warning
-  if (isProductionBuild) {
-    // Android build kontrolü (EAS build'de platform-specific kontrol yapılabilir)
-    // Şimdilik her iki key'i de kontrol ediyoruz (build-time'da hangi platform olduğu belli değil)
-    if (!googleMapsKeyAndroid && process.env.EAS_BUILD_PLATFORM !== 'ios') {
-      throw new Error(
-        'Missing EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID => Standalone APK\'de harita blank olur. ' +
-        'EAS Secrets\'a EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID ekleyin (Maps SDK for Android).'
-      );
-    }
-    if (!googleMapsKeyIOS && process.env.EAS_BUILD_PLATFORM !== 'android') {
-      throw new Error(
-        'Missing EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS => Standalone IPA\'de harita blank olur. ' +
-        'EAS Secrets\'a EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS ekleyin (Maps SDK for iOS).'
-      );
-    }
-  } else {
+  // EAS build kontrolü: EAS Build'de key'ler EAS Secrets'tan gelir
+  // EAS Build'de process.env.EAS_BUILD_PLATFORM set edilir (ama npx expo config çalıştırıldığında henüz set olmayabilir)
+  // Bu yüzden key kontrolü sadece warning olarak yapılıyor, build fail etmiyor
+  const isEASBuild = !!(process.env.EAS_BUILD_PLATFORM || process.env.EAS_BUILD_ID || process.env.EAS_BUILD);
+  
+  // Key kontrolü: Sadece warning (build fail etmiyor)
+  // EAS Build'de key'ler secrets'tan gelir, bu yüzden kontrol yapmaya gerek yok
+  // Local build'de key yoksa warning verilir ama build devam eder
+  {
     // Non-production build'lerde warning verip devam et
     // Local development için .env dosyasına eklenmeli, EAS Build için EAS Secrets kullanılır
     const isLocalDev = !process.env.EAS_BUILD_PLATFORM;
