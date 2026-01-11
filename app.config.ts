@@ -163,6 +163,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ],
     ['sentry-expo', {}],
     ['expo-font', {}],
+    // Custom plugin: Google Maps API Key'i gradle.properties'e yaz
+    ['./app.plugin.js'],
   ],
   extra: {
     // Firebase Client Configuration

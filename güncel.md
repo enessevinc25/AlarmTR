@@ -1,9 +1,58 @@
 # LastStop Alarm TR - Kapsamlı Repo Audit Raporu
 
-**Tarih:** 2025-01-27 (Güncellendi: 2025-01-27)  
+**Tarih:** 2025-01-27 (Güncellendi: 2026-01-11)  
 **Commit:** `1f8599c`  
 **Branch:** `chore/fix-pack`  
 **Audit Scope:** Expo/EAS config, Google Maps API, Firebase/Firestore, Alarm güvenilirliği, Telemetry, Güvenlik, Performans
+
+---
+
+## 🔴 KRİTİK: Harita Blank Sorunu - Düzeltmeler
+
+**Tarih:** 2026-01-11  
+**Sorun:** Harita ekranı açılıyor ama harita render edilmiyor (blank harita)
+
+### Yapılan Düzeltmeler:
+
+1. **✅ MapView'e `provider="google"` eklendi**
+   - **Dosya:** `src/screens/home/HomeMapScreen.tsx:682`
+   - **Açıklama:** Android'de react-native-maps için `provider="google"` prop'u zorunludur. Bu olmadan harita blank kalabilir.
+   - **Değişiklik:**
+     ```tsx
+     <MapView
+       provider="google"  // ✅ EKLENDİ
+       ref={mapRef}
+       style={StyleSheet.absoluteFill}
+       region={region}
+     ```
+
+2. **⚠️ EAS Secrets'ta `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID` eksik**
+   - **Durum:** EAS Secrets'ta sadece `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY` var, platform-specific Android key yok
+   - **Etki:** Android build'lerde API key inject edilmiyor, harita blank kalıyor
+   - **Çözüm:** EAS Dashboard'dan `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID` secret'ını eklemek gerekiyor
+   - **Komut:** `npx eas secret:create --scope project --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID --value YOUR_ANDROID_API_KEY`
+   - **Not:** Google Cloud Console'dan "Maps SDK for Android" için ayrı bir API key oluşturulmalı
+
+3. **✅ AndroidManifest.xml ve build.gradle kontrol edildi**
+   - AndroidManifest.xml'de `<meta-data android:name="com.google.android.geo.API_KEY" android:value="${GOOGLE_MAPS_API_KEY}"/>` mevcut ✅
+   - build.gradle'da `manifestPlaceholders` doğru şekilde ayarlanmış ✅
+   - Sorun: EAS Build'de `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID` secret'ı olmadığı için boş string inject ediliyor
+
+### Sonraki Adımlar:
+
+1. **EAS Secrets'a Android key ekle:**
+   ```bash
+   npx eas secret:create --scope project --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID --value YOUR_ANDROID_API_KEY
+   ```
+
+2. **Yeni build al:**
+   ```bash
+   npm run build:standalone
+   ```
+
+3. **Test et:** Harita ekranında harita görünmeli
+
+---
 
 ---
 

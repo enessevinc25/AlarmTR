@@ -680,6 +680,7 @@ const HomeMapScreen = ({ route, navigation }: Props) => {
           </View>
         ) : MapView && canUseMaps ? (
           <MapView
+            provider="google"
             ref={mapRef}
             style={StyleSheet.absoluteFill}
             region={region}

@@ -10,14 +10,24 @@ def getGoogleMapsApiKey() {
     // Önce gradle.properties'ten kontrol et
     def key = project.findProperty('GOOGLE_MAPS_API_KEY')
     if (key) {
+        println "[build.gradle] Google Maps API Key found in gradle.properties (length: ${key.length()})"
         return key
     }
     // EAS Build'de environment variable'dan oku
     def envKey = System.getenv('EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID')
     if (envKey) {
+        println "[build.gradle] Google Maps API Key found in EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID env var (length: ${envKey.length()})"
         return envKey
     }
     // Fallback: app.config.ts'den okuma (prebuild sırasında set edilir)
+    // EAS Build'de app.config.ts'deki değer de kullanılabilir
+    def configKey = project.findProperty('GOOGLE_MAPS_API_KEY_FROM_CONFIG')
+    if (configKey) {
+        println "[build.gradle] Google Maps API Key found in config (length: ${configKey.length()})"
+        return configKey
+    }
+    println "[build.gradle] WARNING: Google Maps API Key NOT FOUND! Harita blank olabilir."
+    println "[build.gradle] Checked: gradle.properties, EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID env var, config"
     return ''
 }
 
