@@ -112,17 +112,23 @@ service cloud.firestore {
      * - Query'ler:
      *   1. where('userId', '==', userId), where('stopId', '==', stopId) - duplicate kontrolü için
      *   2. where('userId', '==', userId), orderBy('createdAt', 'desc') - listeleme için
+     * - Not: userSavedStops collection'ında soft delete kullanılmıyor, direkt delete kullanılıyor
      */
     match /userSavedStops/{savedId} {
       // Oluşturma: Sadece kendi userId'si ile oluşturabilir
+      // Required fields: userId, stopId, createdAt
+      // Optional fields: stopName, latitude, longitude, addressDescription, city, lineIds, defaultDistanceMeters, updatedAt
       allow create: if isSignedIn() 
         && hasCorrectUserId()
-        && request.resource.data.keys().hasAll(['userId', 'stopId', 'createdAt']);
+        && request.resource.data.keys().hasAll(['userId', 'stopId', 'createdAt'])
+        && request.resource.data.userId is string
+        && request.resource.data.stopId is string
+        && request.resource.data.createdAt is timestamp;
       
-      // Okuma: Sadece kendi favorilerini okuyabilir ve silinmemiş olmalı
+      // Okuma: Sadece kendi favorilerini okuyabilir
+      // Soft delete kontrolü yok çünkü userSavedStops'da soft delete kullanılmıyor
       allow read: if isSignedIn() 
-        && resource.data.userId == request.auth.uid
-        && isNotDeleted();
+        && resource.data.userId == request.auth.uid;
       
       // Güncelleme: Genellikle güncelleme yapılmaz, ama userId değiştirilemez
       allow update: if isSignedIn()

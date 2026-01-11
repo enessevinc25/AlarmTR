@@ -347,6 +347,20 @@ export function subscribeUserSavedStops(
 
 export async function toggleUserSavedStop(userId: string, stop: TransitStop): Promise<void> {
   try {
+    // Input validation
+    if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
+      const error = new Error('Invalid userId');
+      captureError(error, 'savedStopsService/toggleUserSavedStop/invalidUserId');
+      throw error;
+    }
+    
+    if (!stop || !stop.id || typeof stop.id !== 'string' || stop.id.trim().length === 0) {
+      const error = new Error('Invalid stop data');
+      captureError(error, 'savedStopsService/toggleUserSavedStop/invalidStop');
+      throw error;
+    }
+
+    // Duplicate kontrolü - aynı durak zaten favori mi?
     const existingSnap = await getDocs(
       query(
         collection(db, COLLECTION),
@@ -367,25 +381,45 @@ export async function toggleUserSavedStop(userId: string, stop: TransitStop): Pr
           `[savedStopsService] ${existingSnap.docs.length} duplicate favori durak bulundu ve silindi (stopId: ${stop.id})`,
         );
       }
+      
+      // Log favorite remove
+      logEvent('FAVORITE_REMOVE', {
+        stopIdHash: hashStopId(stop.id),
+      });
+      
       return;
     }
 
     // Handle both lineIds and lines fields (TransitStop can have either)
     const resolvedLineIds = stop.lineIds ?? stop.lines ?? [];
     
+    // Payload validation
+    if (typeof stop.latitude !== 'number' || isNaN(stop.latitude)) {
+      const error = new Error('Invalid latitude');
+      captureError(error, 'savedStopsService/toggleUserSavedStop/invalidLatitude');
+      throw error;
+    }
+    
+    if (typeof stop.longitude !== 'number' || isNaN(stop.longitude)) {
+      const error = new Error('Invalid longitude');
+      captureError(error, 'savedStopsService/toggleUserSavedStop/invalidLongitude');
+      throw error;
+    }
+    
     const payload = {
       userId,
       stopId: stop.id,
-      stopName: stop.name,
+      stopName: stop.name || 'Unknown Stop',
       latitude: stop.latitude,
       longitude: stop.longitude,
       addressDescription: stop.addressDescription ?? null,
       city: stop.city ?? null,
-      lineIds: resolvedLineIds,
-      defaultDistanceMeters: stop.radiusMeters ?? 400,
+      lineIds: Array.isArray(resolvedLineIds) ? resolvedLineIds : [],
+      defaultDistanceMeters: typeof stop.radiusMeters === 'number' && !isNaN(stop.radiusMeters) ? stop.radiusMeters : 400,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
+    
     await addDoc(collection(db, COLLECTION), payload);
     
     // Log favorite add
@@ -393,11 +427,25 @@ export async function toggleUserSavedStop(userId: string, stop: TransitStop): Pr
       stopIdHash: hashStopId(stop.id),
     });
   } catch (error) {
+    const errorCode = (error as any)?.code || 'UNKNOWN';
+    const errorMessage = (error as any)?.message || 'Unknown error';
+    
+    // Permission denied hatası için özel log
+    if (errorCode === 'permission-denied') {
+      logEvent('FAVORITES_ERROR', {
+        code: errorCode,
+        messageShort: 'Permission denied - check Firebase rules',
+        userId: userId?.substring(0, 8) || 'unknown',
+      }, 'error');
+    } else {
+      logEvent('FAVORITES_ERROR', {
+        code: errorCode,
+        messageShort: errorMessage.substring(0, 100),
+        userId: userId?.substring(0, 8) || 'unknown',
+      }, 'error');
+    }
+    
     captureError(error, 'savedStopsService/toggleUserSavedStop');
-    logEvent('FAVORITES_ERROR', {
-      code: (error as any)?.code || 'UNKNOWN',
-      messageShort: (error as any)?.message?.substring(0, 100) || 'Unknown error',
-    }, 'error');
     throw error;
   }
 }
