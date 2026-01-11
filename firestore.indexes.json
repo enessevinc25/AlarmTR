@@ -51,18 +51,18 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
+          "fieldPath": "stopId",
+          "order": "ASCENDING"
         },
         {
           "fieldPath": "__name__",
-          "order": "DESCENDING"
+          "order": "ASCENDING"
         }
       ],
       "density": "SPARSE_ALL"
     },
     {
-      "collectionGroup": "userSavedStops",
+      "collectionGroup": "userTargets",
       "queryScope": "COLLECTION",
       "fields": [
         {
@@ -70,8 +70,12 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "stopId",
-          "order": "ASCENDING"
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
         }
       ],
       "density": "SPARSE_ALL"

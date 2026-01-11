@@ -367,7 +367,34 @@ const HomeLandingScreen = () => {
         {QUICK_ACTIONS.map((action) => (
           <TouchableOpacity
             key={action.id}
-            onPress={() => handleQuickAction(action.id)}
+            onPress={() => {
+              // CRITICAL: onPress handler'ın başında logEvent çağrısı yap
+              // Bu log görünmüyorsa, onPress handler bile çalışmıyor demektir
+              try {
+                if (action.id === 'map') {
+                  logEvent('HOME_MAP_BUTTON_PRESS', {
+                    from: 'HomeLanding',
+                    action: 'quick_action_map_button',
+                  });
+                }
+              } catch (logError) {
+                // Logging crash ederse bile devam et
+                if (__DEV__) {
+                  console.error('[HomeLanding] CRITICAL: Logging failed in onPress:', logError);
+                }
+              }
+              
+              // handleQuickAction'ı try-catch ile çağır
+              try {
+                handleQuickAction(action.id);
+              } catch (handlerError) {
+                if (__DEV__) {
+                  console.error('[HomeLanding] CRITICAL: handleQuickAction crashed:', handlerError);
+                }
+                captureError(handlerError as Error, 'HomeLandingScreen/onPress/handleQuickAction');
+                Alert.alert('Hata', 'İşlem gerçekleştirilemedi. Lütfen tekrar deneyin.');
+              }
+            }}
           style={{
             flexBasis: '48%',
             flexGrow: 1,
