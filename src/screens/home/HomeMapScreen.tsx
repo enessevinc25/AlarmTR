@@ -134,15 +134,63 @@ const DEFAULT_REGION: Region = {
 };
 
 const HomeMapScreen = ({ route, navigation }: Props) => {
+  // CRITICAL: Component mount logging - bu log görünmüyorsa component mount olmadan crash oluyor
+  // Bu useEffect component mount olur olmaz çalışır, bu yüzden crash'i yakalayabiliriz
+  useEffect(() => {
+    try {
+      logEvent('HOME_MAP_MOUNT_START', {
+        hasRoute: !!route,
+        hasParams: !!route?.params,
+        mode: route?.params?.mode || 'undefined',
+      });
+    } catch (e) {
+      // Logging bile crash ediyorsa, bu çok ciddi bir sorun
+      if (__DEV__) {
+        console.error('[HomeMap] CRITICAL: Logging failed on mount:', e);
+      }
+    }
+  }, []); // Empty deps - sadece mount için
+
   // route.params undefined olabilir (HomeLanding'den gelirken params yok), güvenli şekilde handle et
-  const { mode, stop, place } = route.params ?? {};
+  const { mode, stop, place } = route?.params ?? {};
+  
+  // Hooks - React kurallarına uygun şekilde en üstte çağrılmalı
   const { user } = useAuth();
   const { activeAlarmSession } = useAlarm();
+  
   const mapRef = useRef<any>(null);
   const mapMountTimeRef = useRef<number | null>(null);
   const regionChangeThrottleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mapReadyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mapReadyLoggedRef = useRef<boolean>(false);
+  
+  // Component mount logging - bu log görünmüyorsa component mount olmadan crash oluyor
+  useEffect(() => {
+    try {
+      logEvent('HOME_MAP_COMPONENT_MOUNTED', {
+        hasUser: !!user,
+        hasActiveAlarm: !!activeAlarmSession,
+        mode: mode || 'undefined',
+        canUseMaps,
+        hasMapView: !!MapView,
+        hasRoute: !!route,
+        hasParams: !!route?.params,
+      });
+    } catch (e) {
+      if (__DEV__) {
+        console.error('[HomeMap] Error logging component mount:', e);
+      }
+      captureError(e as Error, 'HomeMapScreen/componentMount');
+    }
+
+    return () => {
+      try {
+        logEvent('HOME_MAP_COMPONENT_UNMOUNT', {});
+      } catch (e) {
+        // Ignore unmount logging errors
+      }
+    };
+  }, []); // Empty deps - sadece mount/unmount için
   
   // Map mount logging
   useEffect(() => {

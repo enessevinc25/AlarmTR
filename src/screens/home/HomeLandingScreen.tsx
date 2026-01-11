@@ -24,6 +24,7 @@ import { Alert } from 'react-native';
 import { useAppTheme } from '../../theme/useAppTheme';
 import { runAlarmPreflight } from '../../services/alarmPreflight';
 import { getFeatureFlag } from '../../services/featureFlags';
+import { logEvent } from '../../services/telemetry';
 
 type Navigation = NativeStackNavigationProp<HomeStackParamList, 'HomeLanding'>;
 
@@ -164,7 +165,19 @@ const HomeLandingScreen = () => {
         navigation.navigate('StopSearch');
         return;
       case 'map':
-        navigation.navigate('HomeMap');
+        try {
+          logEvent('HOME_MAP_NAVIGATE_ATTEMPT', {
+            from: 'HomeLanding',
+            action: 'quick_action_map',
+          });
+          navigation.navigate('HomeMap');
+        } catch (e) {
+          if (__DEV__) {
+            console.error('[HomeLanding] Error navigating to HomeMap:', e);
+          }
+          captureError(e as Error, 'HomeLandingScreen/navigateToHomeMap');
+          Alert.alert('Hata', 'Harita ekranına geçilemedi. Lütfen tekrar deneyin.');
+        }
         return;
       case 'favorites':
         goToStopsHome('favorites');
