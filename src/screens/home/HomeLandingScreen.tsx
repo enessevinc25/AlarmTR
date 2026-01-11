@@ -160,25 +160,27 @@ const HomeLandingScreen = () => {
   }, [fetchRecentAlarms]);
 
   const handleQuickAction = (action: QuickAction['id']) => {
+    // CRITICAL: Fonksiyonun başında logEvent çağrısı yap - herhangi bir şey yapmadan önce
+    if (action === 'map') {
+      try {
+        logEvent('HOME_MAP_NAVIGATE_ATTEMPT', {
+          from: 'HomeLanding',
+          action: 'quick_action_map',
+        });
+      } catch (logError) {
+        // Logging crash ederse bile devam et
+        if (__DEV__) {
+          console.error('[HomeLanding] Logging failed, continuing navigation:', logError);
+        }
+      }
+    }
+    
     switch (action) {
       case 'search':
         navigation.navigate('StopSearch');
         return;
       case 'map':
-        // CRITICAL: logEvent'i try-catch ile koru, crash olursa bile navigation denemesi yapılsın
-        try {
-          logEvent('HOME_MAP_NAVIGATE_ATTEMPT', {
-            from: 'HomeLanding',
-            action: 'quick_action_map',
-          });
-        } catch (logError) {
-          // Logging crash ederse bile devam et
-          if (__DEV__) {
-            console.error('[HomeLanding] Logging failed, continuing navigation:', logError);
-          }
-        }
-        
-        // Navigation'ı ayrı try-catch ile koru
+        // Navigation'ı try-catch ile koru
         try {
           navigation.navigate('HomeMap');
         } catch (navError) {
