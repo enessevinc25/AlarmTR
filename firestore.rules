@@ -78,6 +78,7 @@ service cloud.firestore {
     /**
      * Kullanıcının özel hedefleri (custom targets)
      * - Sadece kendi hedeflerini görebilir/oluşturabilir/güncelleyebilir/silebilir
+     * - Query: where('userId', '==', userId), orderBy('createdAt', 'desc')
      */
     match /userTargets/{targetId} {
       // Oluşturma: Sadece kendi userId'si ile oluşturabilir
@@ -108,6 +109,9 @@ service cloud.firestore {
     /**
      * Kullanıcının favori durakları
      * - Sadece kendi favorilerini görebilir/ekleyebilir/silebilir
+     * - Query'ler:
+     *   1. where('userId', '==', userId), where('stopId', '==', stopId) - duplicate kontrolü için
+     *   2. where('userId', '==', userId), orderBy('createdAt', 'desc') - listeleme için
      */
     match /userSavedStops/{savedId} {
       // Oluşturma: Sadece kendi userId'si ile oluşturabilir
@@ -138,6 +142,9 @@ service cloud.firestore {
      * Alarm oturumları (alarm geçmişi)
      * - Sadece kendi alarmlarını görebilir/oluşturabilir/güncelleyebilir/silebilir
      * - Soft delete desteği: deletedAt field'ı ile
+     * - Query'ler:
+     *   1. where('userId', '==', userId), where('deletedAt', '==', null), orderBy('createdAt', 'desc') - geçmiş listesi
+     *   2. where('userId', '==', userId), orderBy('createdAt', 'desc'), limit(1) - aktif alarm kontrolü
      */
     match /alarmSessions/{sessionId} {
       // Oluşturma: Sadece kendi userId'si ile oluşturabilir
@@ -152,17 +159,19 @@ service cloud.firestore {
       
       // Güncelleme: Sadece kendi alarmını güncelleyebilir
       // Status değişiklikleri (ACTIVE -> TRIGGERED, CANCELLED) izin verilir
+      // Background sync için lastKnownDistanceMeters güncellemesi izin verilir
       // userId değiştirilemez
       allow update: if isSignedIn()
         && resource.data.userId == request.auth.uid
         && userIdNotChanged()
-        // Status güncellemeleri için özel kontrol (background sync için)
         && (
-          // Normal güncelleme
+          // Normal güncelleme (status değişmeden)
           request.resource.data.status == resource.data.status
           // veya status değişikliği (ACTIVE -> TRIGGERED/CANCELLED)
           || (resource.data.status == 'ACTIVE' && 
               (request.resource.data.status == 'TRIGGERED' || request.resource.data.status == 'CANCELLED'))
+          // veya soft delete (deletedAt set edilmesi)
+          || ('deletedAt' in request.resource.data && request.resource.data.deletedAt != null)
         );
       
       // Silme: Sadece kendi alarmını silebilir
@@ -178,12 +187,13 @@ service cloud.firestore {
     /**
      * Kullanıcının alarm profilleri (hızlı alarm kurma için)
      * - Sadece kendi profillerini görebilir/oluşturabilir/güncelleyebilir/silebilir
+     * - Query: where('userId', '==', userId), orderBy('createdAt', 'desc')
      */
     match /userAlarmProfiles/{profileId} {
       // Oluşturma: Sadece kendi userId'si ile oluşturabilir
       allow create: if isSignedIn() 
         && hasCorrectUserId()
-        && request.resource.data.keys().hasAll(['userId', 'name', 'distanceThresholdMeters', 'createdAt']);
+        && request.resource.data.keys().hasAll(['userId', 'name', 'distanceMeters', 'createdAt']);
       
       // Okuma: Sadece kendi profillerini okuyabilir ve silinmemiş olmalı
       allow read: if isSignedIn() 

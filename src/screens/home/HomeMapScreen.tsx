@@ -216,12 +216,17 @@ const HomeMapScreen = ({ route, navigation }: Props) => {
       mapMountTimeRef.current = Date.now();
       mapReadyLoggedRef.current = false;
       const extra = (Constants.expoConfig?.extra as any) ?? {};
+      const config = Constants.expoConfig;
+      const androidKey = config?.android?.config?.googleMaps?.apiKey || '';
+      
       logEvent('MAP_MOUNT', {
         provider: 'google',
         platform: Platform.OS,
         hasAndroidKey: extra.hasGoogleMapsAndroidKey ?? false,
         hasIOSKey: extra.hasGoogleMapsIOSKey ?? false,
         hasWebKey: extra.hasGoogleWebKey ?? false,
+        androidKeyLength: androidKey.length,
+        androidKeyPrefix: androidKey.length > 0 ? androidKey.substring(0, 10) : 'EMPTY',
       });
       
       // Timeout check: if MAP_READY doesn't come within 8 seconds, log error
@@ -230,6 +235,17 @@ const HomeMapScreen = ({ route, navigation }: Props) => {
           logEvent('MAP_ERROR', { reason: 'timeout_no_ready' }, 'warn');
         }
       }, 8000) as ReturnType<typeof setTimeout>;
+      
+      // Additional check: After 5 seconds, if map is still blank, log warning
+      setTimeout(() => {
+        if (mapReadyLoggedRef.current) {
+          // MAP_READY fired but map might still be blank (API key issue)
+          logEvent('MAP_ERROR', {
+            reason: 'blank_after_ready',
+            warning: 'MAP_READY fired but map tiles may not be loading - check API key in AndroidManifest.xml',
+          }, 'warn');
+        }
+      }, 5000);
     }
     
     return () => {
@@ -711,6 +727,8 @@ const HomeMapScreen = ({ route, navigation }: Props) => {
               captureError(error, 'HomeMap/MapView');
               logEvent('MAP_ERROR', {
                 messageShort: error?.message?.substring(0, 100) || 'Unknown error',
+                errorCode: error?.code || 'NO_CODE',
+                errorType: error?.type || 'NO_TYPE',
               }, 'error');
             }}
             onMapReady={() => {
@@ -727,6 +745,27 @@ const HomeMapScreen = ({ route, navigation }: Props) => {
                 ? Date.now() - mapMountTimeRef.current
                 : undefined;
               logEvent('MAP_READY', { msFromMount });
+              
+              // Check if map is actually rendering tiles (not just blank)
+              // This is a workaround: if map is blank, onMapReady still fires but tiles don't load
+              setTimeout(() => {
+                // After 2 seconds, check if map region is still at initial position
+                // If it is, tiles might not be loading (API key issue)
+                if (mapRef.current) {
+                  mapRef.current.getCamera().then((camera: any) => {
+                    if (__DEV__) {
+                      console.log('[HomeMap] Map camera after ready:', {
+                        center: camera.center,
+                        zoom: camera.zoom,
+                      });
+                    }
+                  }).catch((err: any) => {
+                    if (__DEV__) {
+                      console.warn('[HomeMap] Could not get camera:', err);
+                    }
+                  });
+                }
+              }, 2000);
             }}
           >
             {/* Kümeleme uygulanmış marker'lar */}
