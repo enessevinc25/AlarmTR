@@ -212,15 +212,6 @@ const HomeLandingScreen = () => {
       captureError(actionError as Error, 'HomeLandingScreen/handleQuickAction');
       Alert.alert('Hata', 'İşlem gerçekleştirilemedi. Lütfen tekrar deneyin.');
     }
-      case 'favorites':
-        goToStopsHome('favorites');
-        return;
-      case 'history':
-        goToStopsHome('history');
-        return;
-      default:
-        return;
-    }
   };
 
   const handleQuickAlarm = async (session: AlarmSession) => {
