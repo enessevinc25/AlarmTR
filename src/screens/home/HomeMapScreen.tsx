@@ -217,7 +217,17 @@ const HomeMapScreen = ({ route, navigation }: Props) => {
       mapReadyLoggedRef.current = false;
       const extra = (Constants.expoConfig?.extra as any) ?? {};
       const config = Constants.expoConfig;
-      const androidKey = config?.android?.config?.googleMaps?.apiKey || '';
+      
+      // Key'i doğru kaynaktan oku: önce extra'dan, sonra config'den, sonra env'den
+      // AndroidManifest.xml'de key varsa harita yüklenir, bu yüzden key'in varlığını kontrol et
+      const androidKeyFromConfig = config?.android?.config?.googleMaps?.apiKey || '';
+      const androidKeyFromExtra = extra.googleMapsApiKeyAndroid || '';
+      const androidKeyFromEnv = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID || '';
+      const androidKey = androidKeyFromConfig || androidKeyFromExtra || androidKeyFromEnv;
+      
+      // AndroidManifest.xml'de key varsa harita yüklenir (build-time'da inject edilir)
+      // Runtime'da Constants.expoConfig'den okunamayabilir ama harita çalışıyorsa key var demektir
+      const hasKeyInManifest = Platform.OS === 'android' && canUseMaps; // Harita kullanılabilirse key var demektir
       
       logEvent('MAP_MOUNT', {
         provider: 'google',
@@ -226,7 +236,8 @@ const HomeMapScreen = ({ route, navigation }: Props) => {
         hasIOSKey: extra.hasGoogleMapsIOSKey ?? false,
         hasWebKey: extra.hasGoogleWebKey ?? false,
         androidKeyLength: androidKey.length,
-        androidKeyPrefix: androidKey.length > 0 ? androidKey.substring(0, 10) : 'EMPTY',
+        androidKeyPrefix: androidKey.length > 0 ? androidKey.substring(0, 10) : (hasKeyInManifest ? 'MANIFEST' : 'EMPTY'),
+        hasKeyInManifest: hasKeyInManifest, // AndroidManifest.xml'de key var mı (harita çalışıyorsa var demektir)
       });
       
       // Timeout check: if MAP_READY doesn't come within 8 seconds, log error

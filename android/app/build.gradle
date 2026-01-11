@@ -4,33 +4,6 @@ apply plugin: "com.facebook.react"
 
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 
-// Google Maps API Key - app.config.ts'den okuma
-// EAS Build'de EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID secret'ından gelir
-def getGoogleMapsApiKey() {
-    // Önce gradle.properties'ten kontrol et
-    def key = project.findProperty('GOOGLE_MAPS_API_KEY')
-    if (key) {
-        println "[build.gradle] Google Maps API Key found in gradle.properties (length: ${key.length()})"
-        return key
-    }
-    // EAS Build'de environment variable'dan oku
-    def envKey = System.getenv('EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID')
-    if (envKey) {
-        println "[build.gradle] Google Maps API Key found in EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID env var (length: ${envKey.length()})"
-        return envKey
-    }
-    // Fallback: app.config.ts'den okuma (prebuild sırasında set edilir)
-    // EAS Build'de app.config.ts'deki değer de kullanılabilir
-    def configKey = project.findProperty('GOOGLE_MAPS_API_KEY_FROM_CONFIG')
-    if (configKey) {
-        println "[build.gradle] Google Maps API Key found in config (length: ${configKey.length()})"
-        return configKey
-    }
-    println "[build.gradle] WARNING: Google Maps API Key NOT FOUND! Harita blank olabilir."
-    println "[build.gradle] Checked: gradle.properties, EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID env var, config"
-    return ''
-}
-
 /**
  * This is the configuration block to customize your React Native Android app.
  * By default you don't need to apply any configuration, just uncomment the lines you need.
@@ -123,13 +96,6 @@ android {
         versionName "1.1.0"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
-        
-        // Google Maps API Key - react-native-maps için gerekli
-        // Bu değer app.config.ts'deki android.config.googleMaps.apiKey'den gelir
-        // EAS Build'de EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID secret'ından okunur
-        manifestPlaceholders = [
-            GOOGLE_MAPS_API_KEY: getGoogleMapsApiKey()
-        ]
     }
     signingConfigs {
         debug {
