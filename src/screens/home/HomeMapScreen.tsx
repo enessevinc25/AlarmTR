@@ -40,25 +40,43 @@ let MapView: any = null;
 let Marker: any = null;
 
 // Expo Go kontrolü - import'tan önce yapıyoruz
+// CRITICAL: Bu modül seviyesinde çalışır, bu yüzden try-catch ile korumalıyız
 const isExpoGoEnv = (() => {
   try {
     return isExpoGo();
-  } catch {
+  } catch (error) {
+    // isExpoGo() crash ederse güvenli tarafta kal
+    if (__DEV__) {
+      console.error('[HomeMap] CRITICAL: isExpoGo() crashed:', error);
+    }
     return true; // Güvenli tarafta kal
   }
 })();
 
-const canUseMaps = !isExpoGoEnv && areNativeModulesAvailable();
+const canUseMaps = (() => {
+  try {
+    return !isExpoGoEnv && areNativeModulesAvailable();
+  } catch (error) {
+    // areNativeModulesAvailable() crash ederse güvenli tarafta kal
+    if (__DEV__) {
+      console.error('[HomeMap] CRITICAL: areNativeModulesAvailable() crashed:', error);
+    }
+    return false; // Güvenli tarafta kal
+  }
+})();
 
+// react-native-maps import'u - modül seviyesinde crash olabilir
 if (!isExpoGoEnv) {
   try {
     const mapsModule = require('react-native-maps');
     MapView = mapsModule.default;
     Marker = mapsModule.Marker;
   } catch (error) {
+    // react-native-maps require crash ederse MapView null kalır
     if (__DEV__) {
-      console.warn('[HomeMap] react-native-maps yüklenemedi:', error);
+      console.error('[HomeMap] CRITICAL: react-native-maps require crashed:', error);
     }
+    // MapView ve Marker null kalır, component içinde kontrol edilecek
   }
 }
 

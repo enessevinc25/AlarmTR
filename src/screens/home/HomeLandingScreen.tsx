@@ -165,17 +165,27 @@ const HomeLandingScreen = () => {
         navigation.navigate('StopSearch');
         return;
       case 'map':
+        // CRITICAL: logEvent'i try-catch ile koru, crash olursa bile navigation denemesi yapılsın
         try {
           logEvent('HOME_MAP_NAVIGATE_ATTEMPT', {
             from: 'HomeLanding',
             action: 'quick_action_map',
           });
-          navigation.navigate('HomeMap');
-        } catch (e) {
+        } catch (logError) {
+          // Logging crash ederse bile devam et
           if (__DEV__) {
-            console.error('[HomeLanding] Error navigating to HomeMap:', e);
+            console.error('[HomeLanding] Logging failed, continuing navigation:', logError);
           }
-          captureError(e as Error, 'HomeLandingScreen/navigateToHomeMap');
+        }
+        
+        // Navigation'ı ayrı try-catch ile koru
+        try {
+          navigation.navigate('HomeMap');
+        } catch (navError) {
+          if (__DEV__) {
+            console.error('[HomeLanding] Error navigating to HomeMap:', navError);
+          }
+          captureError(navError as Error, 'HomeLandingScreen/navigateToHomeMap');
           Alert.alert('Hata', 'Harita ekranına geçilemedi. Lütfen tekrar deneyin.');
         }
         return;
