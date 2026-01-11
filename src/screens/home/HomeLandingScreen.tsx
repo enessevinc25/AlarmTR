@@ -160,37 +160,58 @@ const HomeLandingScreen = () => {
   }, [fetchRecentAlarms]);
 
   const handleQuickAction = (action: QuickAction['id']) => {
-    // CRITICAL: Fonksiyonun başında logEvent çağrısı yap - herhangi bir şey yapmadan önce
-    if (action === 'map') {
-      try {
+    // CRITICAL: Fonksiyonun EN BAŞINDA logEvent çağrısı yap - herhangi bir şey yapmadan önce
+    // Bu log görünmüyorsa, handleQuickAction bile çağrılmamış demektir
+    try {
+      if (action === 'map') {
         logEvent('HOME_MAP_NAVIGATE_ATTEMPT', {
           from: 'HomeLanding',
           action: 'quick_action_map',
         });
-      } catch (logError) {
-        // Logging crash ederse bile devam et
-        if (__DEV__) {
-          console.error('[HomeLanding] Logging failed, continuing navigation:', logError);
-        }
       }
+    } catch (logError) {
+      // Logging crash ederse bile devam et
+      if (__DEV__) {
+        console.error('[HomeLanding] CRITICAL: Logging failed in handleQuickAction:', logError);
+      }
+      // Logging crash etse bile navigation'ı denemeliyiz
     }
     
-    switch (action) {
-      case 'search':
-        navigation.navigate('StopSearch');
-        return;
-      case 'map':
-        // Navigation'ı try-catch ile koru
-        try {
-          navigation.navigate('HomeMap');
-        } catch (navError) {
-          if (__DEV__) {
-            console.error('[HomeLanding] Error navigating to HomeMap:', navError);
+    // Action handling - her action için ayrı try-catch
+    try {
+      switch (action) {
+        case 'search':
+          navigation.navigate('StopSearch');
+          return;
+        case 'map':
+          // Navigation'ı try-catch ile koru
+          try {
+            navigation.navigate('HomeMap');
+          } catch (navError) {
+            if (__DEV__) {
+              console.error('[HomeLanding] Error navigating to HomeMap:', navError);
+            }
+            captureError(navError as Error, 'HomeLandingScreen/navigateToHomeMap');
+            Alert.alert('Hata', 'Harita ekranına geçilemedi. Lütfen tekrar deneyin.');
           }
-          captureError(navError as Error, 'HomeLandingScreen/navigateToHomeMap');
-          Alert.alert('Hata', 'Harita ekranına geçilemedi. Lütfen tekrar deneyin.');
-        }
-        return;
+          return;
+        case 'favorites':
+          goToStopsHome('favorites');
+          return;
+        case 'history':
+          goToStopsHome('history');
+          return;
+        default:
+          return;
+      }
+    } catch (actionError) {
+      // handleQuickAction içinde beklenmeyen bir hata
+      if (__DEV__) {
+        console.error('[HomeLanding] CRITICAL: Error in handleQuickAction switch:', actionError);
+      }
+      captureError(actionError as Error, 'HomeLandingScreen/handleQuickAction');
+      Alert.alert('Hata', 'İşlem gerçekleştirilemedi. Lütfen tekrar deneyin.');
+    }
       case 'favorites':
         goToStopsHome('favorites');
         return;
@@ -374,7 +395,16 @@ const HomeLandingScreen = () => {
 
       <PrimaryButton
         title="Durak / Hat Ara"
-        onPress={() => handleQuickAction('search')}
+        onPress={() => {
+          try {
+            handleQuickAction('search');
+          } catch (error) {
+            if (__DEV__) {
+              console.error('[HomeLanding] Error in search button:', error);
+            }
+            captureError(error as Error, 'HomeLandingScreen/searchButton');
+          }
+        }}
         style={{ marginBottom: 24 }}
       />
 
