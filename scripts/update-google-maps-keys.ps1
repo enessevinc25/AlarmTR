@@ -1,125 +1,38 @@
-# Google Maps API Keys - EAS Secrets Güncelleme Script
-# Kullanım: .\scripts\update-google-maps-keys.ps1
+# Google Maps API Keys Güncelleme Scripti
+# Bu script EAS secrets'taki Google Maps API key'lerini günceller
 
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Google Maps API Keys - EAS Secrets Update" -ForegroundColor Cyan
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host ""
+Write-Host "Google Maps API Keys güncelleniyor..." -ForegroundColor Cyan
 
-# API Key'ler (güncel değerler - 2025 güncellemesi)
-$ANDROID_KEY = "AIzaSyAVU7hqKkF7p3yHIFn_ykwJG2PTTIMyg2g"
-$IOS_KEY = "AIzaSyDsm7bYfryNWjJppXCYGHGvYBhFjcMXR0w"
-$SERVER_KEY = "AIzaSyALEHjwVi3HGBYVQvWFHSY0YJTLefczc9A"  # Backend (Cloud Run) için
+# Google Maps API Key Android (Maps SDK for Android)
+Write-Host "`n1. EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID güncelleniyor..." -ForegroundColor Yellow
+Write-Host "   Key: AIzaSyAVU7hqKkF7p3yHIFn_ykwJG2PTTIMyg2g" -ForegroundColor Gray
+Write-Host "   Package: com.laststop.alarmtr" -ForegroundColor Gray
+Write-Host "   APIs: Maps SDK for Android, Places API, Places API (New)" -ForegroundColor Gray
+npx eas env:update --scope project --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID --value "AIzaSyAVU7hqKkF7p3yHIFn_ykwJG2PTTIMyg2g" --environment production --type string --visibility secret --non-interactive
+npx eas env:update --scope project --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID --value "AIzaSyAVU7hqKkF7p3yHIFn_ykwJG2PTTIMyg2g" --environment preview --type string --visibility secret --non-interactive
+npx eas env:update --scope project --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID --value "AIzaSyAVU7hqKkF7p3yHIFn_ykwJG2PTTIMyg2g" --environment development --type string --visibility secret --non-interactive
 
-# EAS CLI kontrolü
-Write-Host "[1/4] EAS CLI kontrolü..." -ForegroundColor Yellow
-try {
-    $easVersion = eas --version 2>&1
-    Write-Host "✅ EAS CLI bulundu: $easVersion" -ForegroundColor Green
-} catch {
-    Write-Host "❌ EAS CLI bulunamadı!" -ForegroundColor Red
-    Write-Host ""
-    Write-Host "Lütfen önce EAS CLI'yı kurun:" -ForegroundColor Yellow
-    Write-Host "  npm install -g eas-cli" -ForegroundColor White
-    Write-Host "  eas login" -ForegroundColor White
-    exit 1
-}
+# Google Maps API Key iOS (Maps SDK for iOS)
+Write-Host "`n2. EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS güncelleniyor..." -ForegroundColor Yellow
+Write-Host "   Key: AIzaSyDsm7bYfryNWjJppXCYGHGvYBhFjcMXR0w" -ForegroundColor Gray
+Write-Host "   Bundle ID: com.laststop.alarmtr" -ForegroundColor Gray
+Write-Host "   APIs: Maps SDK for iOS, Places API, Places API (New)" -ForegroundColor Gray
+npx eas env:update --scope project --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS --value "AIzaSyDsm7bYfryNWjJppXCYGHGvYBhFjcMXR0w" --environment production --type string --visibility secret --non-interactive
+npx eas env:update --scope project --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS --value "AIzaSyDsm7bYfryNWjJppXCYGHGvYBhFjcMXR0w" --environment preview --type string --visibility secret --non-interactive
+npx eas env:update --scope project --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS --value "AIzaSyDsm7bYfryNWjJppXCYGHGvYBhFjcMXR0w" --environment development --type string --visibility secret --non-interactive
 
-# EAS login kontrolü
-Write-Host ""
-Write-Host "[2/4] EAS login kontrolü..." -ForegroundColor Yellow
-try {
-    $easWhoami = eas whoami 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "❌ EAS'e giriş yapılmamış!" -ForegroundColor Red
-        Write-Host "Lütfen önce giriş yapın: eas login" -ForegroundColor Yellow
-        exit 1
-    }
-    Write-Host "✅ EAS'e giriş yapılmış: $easWhoami" -ForegroundColor Green
-} catch {
-    Write-Host "❌ EAS login kontrolü başarısız!" -ForegroundColor Red
-    exit 1
-}
+# Google Maps API Key Web (Places API only - NOT for native maps)
+Write-Host "`n3. EXPO_PUBLIC_GOOGLE_MAPS_API_KEY (Web - Places API only) güncelleniyor..." -ForegroundColor Yellow
+Write-Host "   Key: AIzaSyALEHjwVi3HGBYVQvWFHSYOYJTLefczc9A" -ForegroundColor Gray
+Write-Host "   APIs: Places API, Places API (New) - NOT Maps SDK" -ForegroundColor Gray
+Write-Host "   NOT: Bu key native harita için kullanılmaz!" -ForegroundColor Red
+npx eas env:update --scope project --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY --value "AIzaSyALEHjwVi3HGBYVQvWFHSYOYJTLefczc9A" --environment production --type string --visibility secret --non-interactive
+npx eas env:update --scope project --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY --value "AIzaSyALEHjwVi3HGBYVQvWFHSYOYJTLefczc9A" --environment preview --type string --visibility secret --non-interactive
+npx eas env:update --scope project --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY --value "AIzaSyALEHjwVi3HGBYVQvWFHSYOYJTLefczc9A" --environment development --type string --visibility secret --non-interactive
 
-# Android Key güncelleme
-Write-Host ""
-Write-Host "[3/4] Android API Key güncelleniyor..." -ForegroundColor Yellow
-Write-Host "  Key: $($ANDROID_KEY.Substring(0, 20))..." -ForegroundColor Gray
-
-try {
-    # Mevcut secret'ı kontrol et
-    $existingAndroid = eas secret:list --scope project 2>&1 | Select-String "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID"
-    if ($existingAndroid) {
-        # Mevcut secret var, önce sil sonra oluştur
-        Write-Host "  Mevcut secret bulundu, güncelleniyor..." -ForegroundColor Gray
-        eas secret:delete --scope project --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID --force 2>&1 | Out-Null
-        Start-Sleep -Seconds 1
-    }
-    
-    # Yeni secret oluştur
-    Write-Host "  Secret oluşturuluyor..." -ForegroundColor Gray
-    echo $ANDROID_KEY | eas secret:create --scope project --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID --value-from-stdin 2>&1 | Out-Null
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "✅ Android API Key güncellendi/oluşturuldu" -ForegroundColor Green
-    } else {
-        Write-Host "❌ Android API Key oluşturulamadı!" -ForegroundColor Red
-        Write-Host "   Manuel olarak EAS web arayüzünden güncelleyin: https://expo.dev" -ForegroundColor Yellow
-    }
-} catch {
-    Write-Host "❌ Android API Key güncelleme hatası: $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "   Manuel olarak EAS web arayüzünden güncelleyin: https://expo.dev" -ForegroundColor Yellow
-}
-
-# iOS Key güncelleme
-Write-Host ""
-Write-Host "[4/4] iOS API Key güncelleniyor..." -ForegroundColor Yellow
-Write-Host "  Key: $($IOS_KEY.Substring(0, 20))..." -ForegroundColor Gray
-
-try {
-    # Mevcut secret'ı kontrol et
-    $existingIOS = eas secret:list --scope project 2>&1 | Select-String "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS"
-    if ($existingIOS) {
-        # Mevcut secret var, önce sil sonra oluştur
-        Write-Host "  Mevcut secret bulundu, güncelleniyor..." -ForegroundColor Gray
-        eas secret:delete --scope project --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS --force 2>&1 | Out-Null
-        Start-Sleep -Seconds 1
-    }
-    
-    # Yeni secret oluştur
-    Write-Host "  Secret oluşturuluyor..." -ForegroundColor Gray
-    echo $IOS_KEY | eas secret:create --scope project --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS --value-from-stdin 2>&1 | Out-Null
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "✅ iOS API Key güncellendi/oluşturuldu" -ForegroundColor Green
-    } else {
-        Write-Host "❌ iOS API Key oluşturulamadı!" -ForegroundColor Red
-        Write-Host "   Manuel olarak EAS web arayüzünden güncelleyin: https://expo.dev" -ForegroundColor Yellow
-    }
-} catch {
-    Write-Host "❌ iOS API Key güncelleme hatası: $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "   Manuel olarak EAS web arayüzünden güncelleyin: https://expo.dev" -ForegroundColor Yellow
-}
-
-# Özet
-Write-Host ""
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "SONRAKI ADIMLAR" -ForegroundColor Cyan
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "1. Secret'ları kontrol edin:" -ForegroundColor White
-Write-Host "   eas secret:list --scope project" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "2. Yeni build yapın (secret'lar otomatik yüklenecek):" -ForegroundColor White
-Write-Host "   eas build --profile production --platform android" -ForegroundColor Cyan
-Write-Host "   eas build --profile production --platform ios" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "3. ⚠️ BACKEND İÇİN:" -ForegroundColor Yellow
-Write-Host "   Cloud Run backend için ayrı bir SERVER-SIDE API key gerekiyor." -ForegroundColor Yellow
-Write-Host "   Google Cloud Console'da 'Server key' oluşturun ve:" -ForegroundColor Yellow
-Write-Host "   - IP restrictions: Cloud Run IP'leri" -ForegroundColor Yellow
-Write-Host "   - API restrictions: Places API" -ForegroundColor Yellow
-Write-Host "   Sonra deploy script'inde kullanın:" -ForegroundColor Yellow
-Write-Host "   `$env:GOOGLE_MAPS_API_KEY='your-server-side-key'" -ForegroundColor Cyan
-Write-Host "   cd transit-api" -ForegroundColor Cyan
-Write-Host "   .\deploy-cloud-run.ps1" -ForegroundColor Cyan
-Write-Host ""
-
+Write-Host "`n✅ Tüm Google Maps API key'leri güncellendi!" -ForegroundColor Green
+Write-Host "`nÖNEMLİ:" -ForegroundColor Yellow
+Write-Host "  - Android key: Maps SDK for Android aktif ✅" -ForegroundColor Green
+Write-Host "  - iOS key: Maps SDK for iOS aktif ✅" -ForegroundColor Green
+Write-Host "  - Web key: Sadece Places API (native harita için kullanılmaz) ⚠️" -ForegroundColor Yellow
+Write-Host "`nSecrets'ları kontrol etmek için: npx eas env:list --scope project" -ForegroundColor Cyan
