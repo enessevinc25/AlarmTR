@@ -74,15 +74,10 @@ export async function processBackgroundLocationUpdate(
       return { triggered: false, distance: null };
     }
 
-    // TRIGGERED durumunda: notification göndermeye devam et ama tetikleme yapma
+    // TRIGGERED durumunda: Sadece return et, notification gönderme
+    // Kullanıcı alarm tetiklendiğini zaten biliyor, tekrar tekrar bildirim göndermeye gerek yok
+    // Titreşim ve ses çalmaya devam edecek (foreground'da ActiveAlarmScreen'de)
     if (snapshot.status === 'TRIGGERED') {
-      // Her location update'te notification gönder (alarm durdurana kadar)
-      await scheduleAlarmNotification({
-        title: 'Durağa yaklaşıyorsun!',
-        body: `${snapshot.targetName} durağına çok az kaldı. İnmek için hazırlan.`,
-      }).catch(() => {
-        // Ignore notification errors
-      });
       return { triggered: false, distance: null };
     }
 
