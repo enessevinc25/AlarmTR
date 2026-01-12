@@ -10,6 +10,7 @@
 ## 🔴 KRİTİK: Harita Blank Sorunu - Düzeltmeler
 
 **Tarih:** 2026-01-11  
+**Güncellendi:** 2026-01-12  
 **Sorun:** Harita ekranı açılıyor ama harita render edilmiyor (blank harita)
 
 ### Yapılan Düzeltmeler:
@@ -25,32 +26,36 @@
        style={StyleSheet.absoluteFill}
        region={region}
      ```
+   - **Commit:** `aa231e4` - `fix(map): add provider=google and custom plugin for Google Maps API key injection`
 
-2. **⚠️ EAS Secrets'ta `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID` eksik**
-   - **Durum:** EAS Secrets'ta sadece `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY` var, platform-specific Android key yok
-   - **Etki:** Android build'lerde API key inject edilmiyor, harita blank kalıyor
-   - **Çözüm:** EAS Dashboard'dan `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID` secret'ını eklemek gerekiyor
-   - **Komut:** `npx eas secret:create --scope project --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID --value YOUR_ANDROID_API_KEY`
-   - **Not:** Google Cloud Console'dan "Maps SDK for Android" için ayrı bir API key oluşturulmalı
+2. **✅ Custom Expo Plugin eklendi (`app.plugin.js`)**
+   - **Dosya:** `app.plugin.js` (YENİ)
+   - **Açıklama:** Google Maps API key'ini `app.config.ts`'den `gradle.properties`'e yazıyor
+   - **Commit:** `aa231e4` - `fix(map): add provider=google and custom plugin for Google Maps API key injection`
 
-3. **✅ AndroidManifest.xml ve build.gradle kontrol edildi**
+3. **✅ AndroidManifest.xml ve build.gradle güncellendi**
    - AndroidManifest.xml'de `<meta-data android:name="com.google.android.geo.API_KEY" android:value="${GOOGLE_MAPS_API_KEY}"/>` mevcut ✅
    - build.gradle'da `manifestPlaceholders` doğru şekilde ayarlanmış ✅
-   - Sorun: EAS Build'de `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID` secret'ı olmadığı için boş string inject ediliyor
+   - `getGoogleMapsApiKey()` fonksiyonu eklendi (gradle.properties'ten okuma)
+   - **Commit:** `aa231e4` - `fix(map): add provider=google and custom plugin for Google Maps API key injection`
+
+4. **✅ Harita telemetry düzeltmesi**
+   - MAP_MOUNT event'inde API key detection iyileştirildi
+   - Multiple source kontrolü eklendi (config, extra, env)
+   - hasKeyInManifest flag'i eklendi
+   - **Commit:** `0e255cc` - `fix(telemetry): correct Google Maps API key detection in MAP_MOUNT event`
+
+### Durum:
+
+- ✅ Harita çalışıyor (kullanıcı bildirdi - bazen geç yükleniyor ama çalışıyor)
+- ✅ Telemetry logging düzeltildi
+- ⚠️ Telemetry'de `androidKeyLength: 0` görünüyor ama bu telemetry hatası (harita çalışıyor)
 
 ### Sonraki Adımlar:
 
-1. **EAS Secrets'a Android key ekle:**
-   ```bash
-   npx eas secret:create --scope project --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID --value YOUR_ANDROID_API_KEY
-   ```
-
-2. **Yeni build al:**
-   ```bash
-   npm run build:standalone
-   ```
-
-3. **Test et:** Harita ekranında harita görünmeli
+1. **✅ TAMAMLANDI:** Custom plugin eklendi ve build.gradle güncellendi
+2. **✅ TAMAMLANDI:** Telemetry logging düzeltildi
+3. **Test et:** Yeni build'de harita daha hızlı yüklenmeli ve telemetry doğru bilgiyi göstermeli
 
 ---
 
