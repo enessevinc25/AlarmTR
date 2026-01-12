@@ -392,33 +392,47 @@ apksigner verify --print-certs app.apk | grep SHA-1
 
 **Dosya:** `firestore.indexes.json`
 
-#### ✅ MEVCUT İNDEXLER:
+#### ✅ TÜM İNDEXLER MEVCUT:
+
 1. `alarmSessions` - `userId + deletedAt + createdAt DESC` ✅
 2. `userAlarmProfiles` - `userId + createdAt DESC` ✅
-3. `userSavedStops` - `userId + createdAt DESC` ✅
-4. `userSavedStops` - `userId + stopId` ✅ (duplicate check için)
+3. `userSavedStops` - `userId + stopId` ✅ (duplicate check için)
+4. `userSavedStops` - `userId + createdAt DESC` ✅ (listeleme için - DÜZELTİLDİ)
+5. `userTargets` - `userId + createdAt DESC` ✅ (DÜZELTİLDİ)
 
-#### ⚠️ EKSİK İNDEXLER:
-
-**P1: userTargets composite index**
+**✅ userTargets composite index - TAMAMLANDI**
 - **Kanıt:** `src/services/userTargetsService.ts:20-23` - `where('userId') + orderBy('createdAt', 'desc')`
-- **Durum:** ❌ **HALA EKSİK** - Index henüz eklenmedi
-- **Gerekli Index:**
+- **Durum:** ✅ **TAMAMLANDI** - Index eklendi ve deploy edildi
+- **Index:**
   ```json
   {
     "collectionGroup": "userTargets",
     "queryScope": "COLLECTION",
     "fields": [
       { "fieldPath": "userId", "order": "ASCENDING" },
-      { "fieldPath": "createdAt", "order": "DESCENDING" }
+      { "fieldPath": "createdAt", "order": "DESCENDING" },
+      { "fieldPath": "__name__", "order": "DESCENDING" }
     ]
   }
   ```
-- **Aksiyon:** Firebase Console'dan manuel olarak eklenmeli veya `firestore.indexes.json`'a eklenip deploy edilmeli
+- **Commit:** `bd6f962` - `fix(firestore): add missing index for userSavedStops createdAt ordering`
 
-**P2: userSavedStops duplicate check query**
-- **Kanıt:** `src/services/savedStopsService.ts:35-38` - `where('userId') + where('stopId')`
-- **Durum:** ✅ Index zaten var (`firestore.indexes.json:64-78`)
+**✅ userSavedStops createdAt ordering - TAMAMLANDI**
+- **Kanıt:** `src/services/savedStopsService.ts:226-230` - `where('userId') + orderBy('createdAt', 'desc')`
+- **Durum:** ✅ **TAMAMLANDI** - Index eklendi ve deploy edildi
+- **Index:**
+  ```json
+  {
+    "collectionGroup": "userSavedStops",
+    "queryScope": "COLLECTION",
+    "fields": [
+      { "fieldPath": "userId", "order": "ASCENDING" },
+      { "fieldPath": "createdAt", "order": "DESCENDING" },
+      { "fieldPath": "__name__", "order": "DESCENDING" }
+    ]
+  }
+  ```
+- **Commit:** `bd6f962` - `fix(firestore): add missing index for userSavedStops createdAt ordering`
 
 ### 5.3 Query Pattern Analizi
 
@@ -428,12 +442,12 @@ apksigner verify --print-certs app.apk | grep SHA-1
 |-------|------------|---------------|----------------|
 | `savedStopsService.ts:35` | `userSavedStops` | `userId + stopId` | ✅ Var |
 | `savedStopsService.ts:149` | `userSavedStops` | `userId` | ✅ Var |
-| `savedStopsService.ts:226` | `userSavedStops` | `userId + createdAt DESC` | ✅ Var |
+| `savedStopsService.ts:226` | `userSavedStops` | `userId + createdAt DESC` | ✅ DÜZELTİLDİ |
 | `alarmProfilesService.ts:37` | `userAlarmProfiles` | `userId + createdAt DESC` | ✅ Var |
-| `userTargetsService.ts:20` | `userTargets` | `userId + createdAt DESC` | ❌ **EKSİK** |
+| `userTargetsService.ts:20` | `userTargets` | `userId + createdAt DESC` | ✅ **DÜZELTİLDİ** |
 | `stopsService.ts:48` | `stops` | `name ASC` (optional `city`) | ✅ Single field (otomatik) |
 
-**Sonuç:** Sadece `userTargets` için composite index eksik (P1).
+**Sonuç:** ✅ Tüm gerekli composite index'ler mevcut ve deploy edildi.
 
 ### 5.4 Rules Deployment Checklist
 
@@ -664,11 +678,11 @@ rg "AIza" -n . | grep -v node_modules | grep -v coverage
    - EAS Secrets'a taşındı
    - Production, preview environment'lar için tüm key'ler EAS Secrets'ta
 
-2. **⚠️ userTargets composite index ekle** - **BEKLİYOR**
+2. **✅ userTargets composite index ekle** - **TAMAMLANDI**
    - Dosya: `firestore.indexes.json`
-   - Index henüz eklenmedi
-   - Manuel olarak Firebase Console'dan eklenebilir veya `firestore.indexes.json`'a eklenip deploy edilmeli
-   - Komut: `firebase deploy --only firestore:indexes`
+   - Index eklendi ve deploy edildi
+   - Commit: `bd6f962` - `fix(firestore): add missing index for userSavedStops createdAt ordering`
+   - Komut: `firebase deploy --only firestore:indexes` ✅ ÇALIŞTIRILDI
 
 3. **✅ Task registration garantisi doğrula**
    - Test: App cold start'ta task registered kontrolü
@@ -810,17 +824,26 @@ rg "AIza" -n . | grep -v node_modules | grep -v coverage
 
 **İyileştirme Alanları:**
 - ✅ API key'ler EAS Secrets'a taşındı (P0 - TAMAMLANDI)
-- ⚠️ `userTargets` composite index eksik (P1 - BEKLİYOR)
+- ✅ `userTargets` composite index eklendi (P1 - TAMAMLANDI)
+- ✅ `userSavedStops` createdAt index eklendi (P1 - TAMAMLANDI)
 - ✅ Search cache implementasyonu (P1 - TAMAMLANDI)
 - ✅ Lint kritik error'ları giderildi (P2 - TAMAMLANDI)
+- ✅ Favori ekleme sorunu düzeltildi (P1 - TAMAMLANDI)
+- ✅ Alarm diagnostic logging iyileştirildi (P2 - TAMAMLANDI)
+- ✅ Alarm bildirimleri optimize edildi (P2 - TAMAMLANDI)
+- ✅ Harita telemetry düzeltmesi (P2 - TAMAMLANDI)
 
 ### Öncelikli Aksiyonlar
 
 1. **✅ TAMAMLANDI:** `eas.json`'dan API key'leri kaldır → EAS Secrets
-2. **⚠️ BEKLİYOR:** `userTargets` composite index ekle (Firebase Console veya `firestore.indexes.json` + deploy)
-3. **✅ TAMAMLANDI:** Search cache implementasyonu (`src/services/searchCache.ts`)
-4. **✅ TAMAMLANDI:** Lint kritik error'ları giderildi (test dosyalarındaki require() kullanımları)
-5. **İYİLEŞTİRME:** Alarm session dedupe (P2)
+2. **✅ TAMAMLANDI:** `userTargets` composite index ekle → Firebase'e deploy edildi
+3. **✅ TAMAMLANDI:** `userSavedStops` createdAt index ekle → Firebase'e deploy edildi
+4. **✅ TAMAMLANDI:** Search cache implementasyonu (`src/services/searchCache.ts`)
+5. **✅ TAMAMLANDI:** Lint kritik error'ları giderildi (test dosyalarındaki require() kullanımları)
+6. **✅ TAMAMLANDI:** Favori ekleme sorunu düzeltildi (Firebase rules + index + validation)
+7. **✅ TAMAMLANDI:** Alarm diagnostic logging iyileştirildi (counter'lar düzeltildi)
+8. **✅ TAMAMLANDI:** Alarm bildirimleri optimize edildi (tekrarlayan bildirimler kaldırıldı)
+9. **İYİLEŞTİRME:** Alarm session dedupe (P2 - Nice-to-have)
 
 ---
 
