@@ -25,6 +25,7 @@ import {
 } from './alarmAccuracyEngine';
 import { getFeatureFlag } from './featureFlags';
 import { logEvent } from './telemetry';
+import { captureError } from '../utils/errorReporting';
 
 const PENDING_SYNC_EVENTS_KEY = '@laststop/pendingSyncEvents';
 const HEARTBEAT_LOG_KEY = '@laststop/heartbeatLog';
@@ -141,42 +142,48 @@ export async function processBackgroundLocationUpdate(
       : 0;
 
     // Diagnostic: LOCATION_UPDATE
-    // Note: diagLog throttle uygular, bu yüzden her çağrı kaydedilmeyebilir
-    // Ama counter'lar her zaman güncellenir
-    diagLog(snapshot.sessionId, {
-      level: 'info',
-      type: 'LOCATION_UPDATE',
-      data: {
-        ageSec: Math.round(locationAgeSec),
-        accuracyBucket,
-        acceptedSample: decision.acceptedSample,
-        reason: decision.reason,
-      },
-    }).catch((error) => {
+    // IMPORTANT: Counter'lar diagLog içinde güncellenir, bu yüzden await kullanmalıyız
+    // Throttle sadece event persistence'ı etkiler, counter'lar her zaman güncellenir
+    try {
+      await diagLog(snapshot.sessionId, {
+        level: 'info',
+        type: 'LOCATION_UPDATE',
+        data: {
+          ageSec: Math.round(locationAgeSec),
+          accuracyBucket,
+          acceptedSample: decision.acceptedSample,
+          reason: decision.reason,
+        },
+      });
+    } catch (error) {
       // Diagnostic hatalarını logla ama devam et
       if (__DEV__) {
         console.warn('[alarmBackgroundCore] diagLog LOCATION_UPDATE failed:', error);
       }
-    });
+      captureError(error as Error, 'alarmBackgroundCore/diagLog/LOCATION_UPDATE');
+    }
 
     // Diagnostic: DISTANCE_UPDATE
-    // Note: diagLog throttle uygular, bu yüzden her çağrı kaydedilmeyebilir
-    // Ama counter'lar her zaman güncellenir
-    diagLog(snapshot.sessionId, {
-      level: 'info',
-      type: 'DISTANCE_UPDATE',
-      data: {
-        distMetersRounded: distanceRounded,
-        smoothedDistanceMeters: Math.round(decision.smoothedDistanceMeters / 5) * 5, // 5m bucket
-        isInside: decision.isInside,
-        insideStreak: decision.nextState.insideStreak,
-      },
-    }).catch((error) => {
+    // IMPORTANT: Counter'lar diagLog içinde güncellenir, bu yüzden await kullanmalıyız
+    // Throttle sadece event persistence'ı etkiler, counter'lar her zaman güncellenir
+    try {
+      await diagLog(snapshot.sessionId, {
+        level: 'info',
+        type: 'DISTANCE_UPDATE',
+        data: {
+          distMetersRounded: distanceRounded,
+          smoothedDistanceMeters: Math.round(decision.smoothedDistanceMeters / 5) * 5, // 5m bucket
+          isInside: decision.isInside,
+          insideStreak: decision.nextState.insideStreak,
+        },
+      });
+    } catch (error) {
       // Diagnostic hatalarını logla ama devam et
       if (__DEV__) {
         console.warn('[alarmBackgroundCore] diagLog DISTANCE_UPDATE failed:', error);
       }
-    });
+      captureError(error as Error, 'alarmBackgroundCore/diagLog/DISTANCE_UPDATE');
+    }
 
     // Telemetry: Distance update
     logEvent('DISTANCE_UPDATE', {
