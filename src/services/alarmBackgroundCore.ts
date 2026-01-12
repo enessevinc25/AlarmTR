@@ -141,20 +141,27 @@ export async function processBackgroundLocationUpdate(
       : 0;
 
     // Diagnostic: LOCATION_UPDATE
+    // Note: diagLog throttle uygular, bu yüzden her çağrı kaydedilmeyebilir
+    // Ama counter'lar her zaman güncellenir
     diagLog(snapshot.sessionId, {
       level: 'info',
       type: 'LOCATION_UPDATE',
       data: {
-        ageSec: locationAgeSec,
+        ageSec: Math.round(locationAgeSec),
         accuracyBucket,
         acceptedSample: decision.acceptedSample,
         reason: decision.reason,
       },
-    }).catch(() => {
-      // Ignore diagnostic errors
+    }).catch((error) => {
+      // Diagnostic hatalarını logla ama devam et
+      if (__DEV__) {
+        console.warn('[alarmBackgroundCore] diagLog LOCATION_UPDATE failed:', error);
+      }
     });
 
     // Diagnostic: DISTANCE_UPDATE
+    // Note: diagLog throttle uygular, bu yüzden her çağrı kaydedilmeyebilir
+    // Ama counter'lar her zaman güncellenir
     diagLog(snapshot.sessionId, {
       level: 'info',
       type: 'DISTANCE_UPDATE',
@@ -164,8 +171,11 @@ export async function processBackgroundLocationUpdate(
         isInside: decision.isInside,
         insideStreak: decision.nextState.insideStreak,
       },
-    }).catch(() => {
-      // Ignore diagnostic errors
+    }).catch((error) => {
+      // Diagnostic hatalarını logla ama devam et
+      if (__DEV__) {
+        console.warn('[alarmBackgroundCore] diagLog DISTANCE_UPDATE failed:', error);
+      }
     });
 
     // Telemetry: Distance update

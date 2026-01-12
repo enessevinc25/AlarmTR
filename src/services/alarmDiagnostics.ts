@@ -86,6 +86,9 @@ async function loadSession(sessionId: string): Promise<AlarmDiagSession | null> 
 
 /**
  * Session'ı AsyncStorage'a kaydet (throttle uygula)
+ * 
+ * IMPORTANT: Counter'lar her zaman güncellenir, throttle sadece event'leri etkiler.
+ * Bu yüzden counter'lar doğru sayılır ama event'ler throttle nedeniyle eksik görünebilir.
  */
 async function persistSession(session: AlarmDiagSession, force = false): Promise<void> {
   try {
@@ -93,8 +96,10 @@ async function persistSession(session: AlarmDiagSession, force = false): Promise
     const lastPersist = lastPersistTime[session.sessionId] || 0;
     
     // Throttle kontrolü
+    // NOTE: Counter'lar zaten session.counters'da güncellendi, throttle sadece persist'i geciktirir
     if (!force && now - lastPersist < PERSIST_THROTTLE_MS) {
       // Throttle: pending events'e ekle, persist etme
+      // Counter'lar zaten güncellendi, sadece persist'i geciktiriyoruz
       if (!pendingEvents[session.sessionId]) {
         pendingEvents[session.sessionId] = [];
       }
