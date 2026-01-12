@@ -1,7 +1,7 @@
 # LastStop Alarm TR - Kapsamlı Repo Audit Raporu
 
-**Tarih:** 2025-01-27 (Güncellendi: 2026-01-11)  
-**Commit:** `1f8599c`  
+**Tarih:** 2025-01-27 (Güncellendi: 2026-01-12)  
+**Commit:** `1631fa8`  
 **Branch:** `chore/fix-pack`  
 **Audit Scope:** Expo/EAS config, Google Maps API, Firebase/Firestore, Alarm güvenilirliği, Telemetry, Güvenlik, Performans
 
@@ -75,13 +75,13 @@
 | 1 | **P0** | **✅ API Keys in eas.json** | ✅ DÜZELTİLDİ - Production key'leri EAS Secrets'a taşındı | `eas.json:55-57` |
 | 2 | **P0** | **Native key fallback riski** | `env.ts` doğru ama `app.config.ts` fallback kontrolü eksik | `app.config.ts:13-15` |
 | 3 | **P0** | **Task registration garantisi** | Bootstrap var ama double-check gerekli | `src/bootstrap/backgroundTasks.ts` |
-| 4 | **P1** | **Firestore composite index eksikliği** | `userTargets` için composite index eksik | `firestore.indexes.json` |
+| 4 | **P1** | **✅ Firestore composite index eksikliği** | ✅ DÜZELTİLDİ - userTargets ve userSavedStops index'leri eklendi | `firestore.indexes.json` |
 | 5 | **P1** | **✅ MAP_READY timeout kontrolü** | ✅ Var - 8s timeout implementasyonu mevcut | `src/screens/home/HomeMapScreen.tsx:160` |
 | 6 | **P1** | **✅ Lint warnings** | ✅ DÜZELTİLDİ - Test dosyalarındaki require() error'ları giderildi | `src/__tests__/*.ts` |
 | 7 | **P2** | **Telemetry flush consistency** | Background flush var ama export'ta double-check | `src/services/telemetry.ts` |
 | 8 | **P2** | **Alarm session dedupe** | `startAlarmSession` duplicate kontrolü yok | `src/context/AlarmContext.tsx` |
 | 9 | **P2** | **✅ Performance: Search cache** | ✅ DÜZELTİLDİ - TTL cache implementasyonu eklendi | `src/services/searchCache.ts` |
-| 10 | **P2** | **Diagnostics export session filtering** | Current session filtering var ama test edilmemiş | `src/services/telemetry.ts:448` |
+| 10 | **P2** | **✅ Diagnostics export session filtering** | ✅ DÜZELTİLDİ - LOCATION_UPDATE ve DISTANCE_UPDATE counter'ları düzeltildi | `src/services/alarmDiagnostics.ts` |
 
 ---
 
@@ -1093,6 +1093,65 @@ git diff --stat
 
 **FIX RUN TAMAMLANDI**  
 *Tüm P0 ve P1 fix'ler uygulandı. P2 lint warnings kısmen düzeltildi (kritik error'lar giderildi).*
+
+---
+
+## 15. SON DÜZELTMELER (2026-01-12)
+
+### Yapılan İşlemler:
+
+1. **✅ Favori Ekleme Sorunu Düzeltildi**
+   - **Commit:** `623b340` - `fix(favorites): improve favorite add functionality and Firebase rules`
+   - Firebase index'ler güncellendi:
+     - `userSavedStops` için `createdAt` ordering index eklendi
+     - `userTargets` composite index eklendi
+   - Firebase rules güncellendi:
+     - `isNotDeleted()` kontrolü kaldırıldı (userSavedStops için soft delete kullanılmıyor)
+     - Field validation iyileştirildi
+   - Kod tarafında iyileştirmeler:
+     - Input validation eklendi
+     - Payload validation eklendi
+     - Error handling iyileştirildi
+     - FAVORITE_REMOVE event'i eklendi
+
+2. **✅ Alarm Diagnostic Logging İyileştirildi**
+   - **Commit:** `f30b213` - `fix(diagnostics): await diagLog calls to ensure counters are updated`
+   - **Commit:** `60f31b2` - `fix(diagnostics): improve LOCATION_UPDATE and DISTANCE_UPDATE logging`
+   - `diagLog` çağrıları `await` ile yapılıyor (counter'ların güncellenmesi için)
+   - Hata yakalama iyileştirildi (`captureError` eklendi)
+   - Throttle davranışı dokümante edildi
+   - Counter'lar artık doğru sayılıyor
+
+3. **✅ Alarm Bildirimleri Optimize Edildi**
+   - **Commit:** `1631fa8` - `feat(alarm): remove repeated notifications after alarm trigger`
+   - TRIGGERED durumunda tekrarlayan notification'lar kaldırıldı
+   - Sadece ilk tetiklemede notification gönderiliyor
+   - Titreşim ve ses çalmaya devam ediyor (foreground'da ActiveAlarmScreen'de)
+
+4. **✅ Harita Telemetry Düzeltmesi**
+   - **Commit:** `0e255cc` - `fix(telemetry): correct Google Maps API key detection in MAP_MOUNT event`
+   - API key detection iyileştirildi (multiple source kontrolü)
+   - hasKeyInManifest flag'i eklendi
+
+### Son Commit'ler:
+
+```
+1631fa8 feat(alarm): remove repeated notifications after alarm trigger
+f30b213 fix(diagnostics): await diagLog calls to ensure counters are updated
+60f31b2 fix(diagnostics): improve LOCATION_UPDATE and DISTANCE_UPDATE logging
+623b340 fix(favorites): improve favorite add functionality and Firebase rules
+bd6f962 fix(firestore): add missing index for userSavedStops createdAt ordering
+0e255cc fix(telemetry): correct Google Maps API key detection in MAP_MOUNT event
+```
+
+### Proje Durumu:
+
+- **Branch:** `chore/fix-pack`
+- **Commit:** `1631fa8`
+- **Typecheck:** ✅ PASS
+- **Lint:** ⚠️ WARNINGS (kabul edilebilir)
+- **Tests:** ✅ PASS
+- **Git Status:** ✅ CLEAN
 
 ---
 
