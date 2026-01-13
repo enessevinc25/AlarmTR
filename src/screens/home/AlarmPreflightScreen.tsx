@@ -212,29 +212,26 @@ const AlarmPreflightScreen = ({ route, navigation }: Props) => {
             {(item.ctaPrimaryLabel || item.ctaSecondaryLabel) && (
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
                 {item.ctaPrimaryLabel && (
-                  <TouchableOpacity
+                  <PrimaryButton
+                    title={item.ctaPrimaryLabel}
                     onPress={() => handleCTA(item)}
-                    style={[styles.ctaButton, { backgroundColor: colors.primary }]}
-                  >
-                    <Text style={[styles.ctaButtonText, { color: colors.white }]}>{item.ctaPrimaryLabel}</Text>
-                  </TouchableOpacity>
+                    style={styles.ctaButton}
+                  />
                 )}
                 {item.ctaSecondaryLabel && (
-                  <TouchableOpacity
+                  <PrimaryButton
+                    title={item.ctaSecondaryLabel}
                     onPress={() => handleCTA(item)}
                     style={[styles.ctaButton, { backgroundColor: colors.gray800 }]}
-                  >
-                    <Text style={[styles.ctaButtonText, { color: colors.white }]}>{item.ctaSecondaryLabel}</Text>
-                  </TouchableOpacity>
+                  />
                 )}
                 {/* Battery optimization için Samsung rehberi butonu */}
                 {item.key === 'battery_optimization' && isSamsung && (
-                  <TouchableOpacity
+                  <PrimaryButton
+                    title="Samsung Rehberi"
                     onPress={goToSamsungBatteryHelp}
-                    style={[styles.ctaButton, { backgroundColor: colors.primary }]}
-                  >
-                    <Text style={[styles.ctaButtonText, { color: colors.white }]}>Samsung Rehberi</Text>
-                  </TouchableOpacity>
+                    style={styles.ctaButton}
+                  />
                 )}
               </View>
             )}

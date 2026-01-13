@@ -155,7 +155,6 @@ const LoginScreen = ({ navigation, route }: Props) => {
         title="Giriş Yap" 
         onPress={handleSubmit} 
         disabled={loading}
-        style={{ backgroundColor: colors.primary }}
       />
 
       <TouchableOpacity

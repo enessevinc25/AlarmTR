@@ -9,6 +9,7 @@ import {
   TextStyle,
 } from 'react-native';
 import { useAppTheme } from '../../theme/useAppTheme';
+import { auditButtonContrast } from '../../utils/contrastAudit';
 
 interface Props {
   title: string;
@@ -22,17 +23,42 @@ interface Props {
 }
 
 const PrimaryButton = ({ title, onPress, disabled, leftIcon, style, textStyle, accessibilityLabel, accessibilityHint }: Props) => {
-  const { colors } = useAppTheme();
-  const defaultBgColor = style && typeof style === 'object' && 'backgroundColor' in style 
-    ? undefined 
-    : colors.primary;
+  const { tokens, colors } = useAppTheme();
   
-  // Text rengini dinamik olarak belirle: backgroundColor varsa ona göre, yoksa white
-  const textColor = textStyle && typeof textStyle === 'object' && 'color' in textStyle
-    ? undefined // textStyle'da color varsa onu kullan
-    : (style && typeof style === 'object' && 'backgroundColor' in style && (style.backgroundColor === '#ffffff' || style.backgroundColor === 'white'))
-      ? colors.text // Beyaz arka plan varsa text rengi kullan
-      : colors.white; // Varsayılan olarak beyaz
+  // Style'dan backgroundColor'ü çıkar (varsa)
+  const styleObj = style && typeof style === 'object' && !Array.isArray(style) ? style : {};
+  const customBgColor = 'backgroundColor' in styleObj ? (styleObj.backgroundColor as string) : undefined;
+  
+  // Background color: custom varsa onu kullan, yoksa token'dan al
+  const backgroundColor = customBgColor || tokens.button.primaryBg;
+  
+  // Text color: custom textStyle'da color varsa onu kullan, yoksa kontrast garantili token'dan al
+  const customTextColor = textStyle && typeof textStyle === 'object' && !Array.isArray(textStyle) && 'color' in textStyle
+    ? (textStyle.color as string)
+    : undefined;
+  
+  // Kontrast garantili text color belirleme
+  let textColor: string;
+  if (customTextColor) {
+    textColor = customTextColor;
+  } else if (customBgColor) {
+    // Custom background color varsa kontrast kontrolü yap
+    // Beyaz veya çok açık renkse koyu text, değilse beyaz text
+    const isLightBg = customBgColor === '#ffffff' || 
+                      customBgColor === 'white' || 
+                      customBgColor === '#FFFFFF' ||
+                      (customBgColor.startsWith('#') && parseInt(customBgColor.slice(1, 3), 16) > 240);
+    
+    textColor = isLightBg ? tokens.text.onSurface : tokens.button.primaryText;
+    
+    // Dev mode'da kontrast kontrolü
+    if (__DEV__ && !disabled) {
+      auditButtonContrast(backgroundColor, textColor, `PrimaryButton (${title})`);
+    }
+  } else {
+    // Token'dan gelen primary button için garantili kontrast
+    textColor = tokens.button.primaryText;
+  }
 
   return (
     <TouchableOpacity
@@ -45,13 +71,15 @@ const PrimaryButton = ({ title, onPress, disabled, leftIcon, style, textStyle, a
       accessibilityState={{ disabled: !!disabled }}
       style={[
         styles.button,
-        defaultBgColor ? { backgroundColor: defaultBgColor } : undefined,
-        disabled ? styles.buttonDisabled : undefined,
+        {
+          backgroundColor,
+          opacity: disabled ? 0.6 : 1,
+        },
         style,
       ]}
     >
       {leftIcon ? <View style={styles.iconWrapper}>{leftIcon}</View> : null}
-      <Text style={[styles.text, textColor ? { color: textColor } : undefined, textStyle]}>{title}</Text>
+      <Text style={[styles.text, { color: textColor }, textStyle]}>{title}</Text>
     </TouchableOpacity>
   );
 };
@@ -64,9 +92,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginVertical: 8,
     flexDirection: 'row',
-  },
-  buttonDisabled: {
-    opacity: 0.5,
   },
   iconWrapper: {
     marginRight: 8,

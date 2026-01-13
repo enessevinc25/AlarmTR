@@ -11,6 +11,7 @@ import {
 
 import ScreenContainer from '../../components/common/ScreenContainer';
 import PrimaryButton from '../../components/common/PrimaryButton';
+import { useAppTheme } from '../../theme/useAppTheme';
 import {
   AlarmSettings,
   AlarmSoundProfile,
@@ -77,6 +78,7 @@ const vibrationOptions: Option<AlarmVibrationProfile>[] = [
 
 const AlarmSettingsScreen = () => {
   const { settings, loading, updateSettings } = useAlarmSettings();
+  const { colors } = useAppTheme();
   const [updating, setUpdating] = useState<'sound' | 'vibration' | null>(null);
   const [testing, setTesting] = useState(false);
 
@@ -190,14 +192,14 @@ const AlarmSettingsScreen = () => {
     <ScreenContainer>
       <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
         <Text style={styles.sectionTitle}>Ses Profili</Text>
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
           {soundOptions.map((option) =>
             renderOption(option, settings.soundProfile, isUpdating, handleSelectSound),
           )}
         </View>
 
         <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Titreşim Profili</Text>
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
           {vibrationOptions.map((option) =>
             renderOption(option, settings.vibrationProfile, isUpdating, handleSelectVibration),
           )}

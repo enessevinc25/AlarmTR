@@ -31,6 +31,7 @@ import { useAlarm } from '../../context/AlarmContext';
 import { useAuth } from '../../context/AuthContext';
 import { getUserAlarmPreferences } from '../../services/userSettingsService';
 import { useNetwork } from '../../context/NetworkContext';
+import { useAppTheme } from '../../theme/useAppTheme';
 import {
   createUserAlarmProfile,
   listUserAlarmProfiles,
@@ -62,6 +63,7 @@ const AlarmDetailsScreen = ({ route, navigation }: Props) => {
   } = route.params;
   const { user } = useAuth();
   const { isOnline } = useNetwork();
+  const { colors } = useAppTheme();
   const [target, setTarget] = useState<TransitStop | UserTarget | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -608,7 +610,7 @@ const AlarmDetailsScreen = ({ route, navigation }: Props) => {
 
       <Modal transparent visible={profilesModalVisible} animationType="slide">
         <View style={modalStyles.backdrop}>
-          <View style={modalStyles.content}>
+          <View style={[modalStyles.content, { backgroundColor: colors.cardBackground }]}>
             <Text style={modalStyles.title}>Profili seç</Text>
             {profilesLoading ? (
               <ActivityIndicator />
@@ -642,7 +644,7 @@ const AlarmDetailsScreen = ({ route, navigation }: Props) => {
 
       <Modal transparent visible={saveProfileModalVisible} animationType="slide">
         <View style={modalStyles.backdrop}>
-          <View style={modalStyles.content}>
+          <View style={[modalStyles.content, { backgroundColor: colors.cardBackground }]}>
             <Text style={modalStyles.title}>Profil adı</Text>
             <TextInput
               value={profileNameInput}
@@ -685,7 +687,6 @@ const modalStyles = StyleSheet.create({
     padding: 16,
   },
   content: {
-    backgroundColor: '#fff',
     borderRadius: 16,
     padding: 16,
     maxHeight: '80%',

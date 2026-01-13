@@ -17,6 +17,7 @@ import { captureError } from '../../utils/errorReporting';
 import PrimaryButton from '../../components/common/PrimaryButton';
 import { useAuth } from '../../context/AuthContext';
 import { useNetwork } from '../../context/NetworkContext';
+import { useAppTheme } from '../../theme/useAppTheme';
 import {
   createUserAlarmProfile,
   deleteUserAlarmProfile,
@@ -31,6 +32,7 @@ const AlarmProfilesScreen = () => {
   const navigation = useNavigation();
   const { user } = useAuth();
   const { isOnline } = useNetwork();
+  const { colors } = useAppTheme();
 
   const [profiles, setProfiles] = useState<UserAlarmProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -215,19 +217,11 @@ const AlarmProfilesScreen = () => {
             Sık kullandığın ayarları kaydet, tek dokunuşla uygula.
           </Text>
         </View>
-        <TouchableOpacity
+        <PrimaryButton
+          title="Yeni Profil"
           onPress={openCreateModal}
-          style={{
-            backgroundColor: '#0E7490',
-            borderRadius: 12,
-            paddingHorizontal: 12,
-            paddingVertical: 10,
-            height: 44,
-            justifyContent: 'center',
-          }}
-        >
-          <Text style={{ color: '#fff', fontWeight: '600' }}>Yeni Profil</Text>
-        </TouchableOpacity>
+          style={{ paddingVertical: 10, paddingHorizontal: 12, height: 44 }}
+        />
       </View>
 
       {loading ? (
@@ -285,7 +279,7 @@ const AlarmProfilesScreen = () => {
 
       <Modal transparent visible={modalVisible} animationType="slide">
         <View style={styles.modalBackdrop}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: colors.cardBackground }]}>
             <Text style={{ fontSize: 18, fontWeight: '700', marginBottom: 12 }}>
               {editingProfile ? 'Profili Düzenle' : 'Yeni Profil'}
             </Text>
