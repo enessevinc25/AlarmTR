@@ -74,7 +74,12 @@ async function loadSession(sessionId: string): Promise<AlarmDiagSession | null> 
     if (!raw) {
       return null;
     }
-    return JSON.parse(raw) as AlarmDiagSession;
+    const session = JSON.parse(raw) as AlarmDiagSession;
+    
+    // Counter'ları kaydet (sonraki persist'te karşılaştırmak için)
+    lastPersistedCounters[sessionId] = { ...session.counters };
+    
+    return session;
   } catch (error) {
     if (__DEV__) {
       console.warn('[alarmDiagnostics] Load session failed:', error);
@@ -84,22 +89,33 @@ async function loadSession(sessionId: string): Promise<AlarmDiagSession | null> 
   }
 }
 
+// Son persist edilen counter'ları tut (counter değişikliği kontrolü için)
+let lastPersistedCounters: Record<string, Record<string, number>> = {};
+
 /**
  * Session'ı AsyncStorage'a kaydet (throttle uygula)
  * 
- * IMPORTANT: Counter'lar her zaman güncellenir, throttle sadece event'leri etkiler.
- * Bu yüzden counter'lar doğru sayılır ama event'ler throttle nedeniyle eksik görünebilir.
+ * IMPORTANT: Counter'lar her zaman persist edilir, throttle sadece event'leri etkiler.
+ * Counter'lar değiştiyse throttle'a bakmadan persist edilir.
  */
 async function persistSession(session: AlarmDiagSession, force = false): Promise<void> {
   try {
     const now = Date.now();
     const lastPersist = lastPersistTime[session.sessionId] || 0;
     
-    // Throttle kontrolü
-    // NOTE: Counter'lar zaten session.counters'da güncellendi, throttle sadece persist'i geciktirir
-    if (!force && now - lastPersist < PERSIST_THROTTLE_MS) {
+    // Counter'lar değişti mi kontrol et
+    const lastCounters = lastPersistedCounters[session.sessionId] || {};
+    const countersChanged = 
+      lastCounters.tickCount !== session.counters.tickCount ||
+      lastCounters.locationCount !== session.counters.locationCount ||
+      lastCounters.distanceCount !== session.counters.distanceCount ||
+      lastCounters.errorCount !== session.counters.errorCount;
+    
+    // Throttle kontrolü (counter'lar değişmediyse ve force değilse)
+    // IMPORTANT: Counter'lar değiştiyse throttle'u bypass et
+    if (!force && !countersChanged && now - lastPersist < PERSIST_THROTTLE_MS) {
       // Throttle: pending events'e ekle, persist etme
-      // Counter'lar zaten güncellendi, sadece persist'i geciktiriyoruz
+      // Counter'lar değişmedi, sadece event persist'ini geciktiriyoruz
       if (!pendingEvents[session.sessionId]) {
         pendingEvents[session.sessionId] = [];
       }
@@ -117,6 +133,9 @@ async function persistSession(session: AlarmDiagSession, force = false): Promise
     const key = `${DIAG_STORAGE_PREFIX}${session.sessionId}`;
     await AsyncStorage.setItem(key, JSON.stringify(session));
     lastPersistTime[session.sessionId] = now;
+    
+    // Counter'ları kaydet (sonraki persist'te karşılaştırmak için)
+    lastPersistedCounters[session.sessionId] = { ...session.counters };
     
     // Last session ID'yi güncelle
     await AsyncStorage.setItem(LAST_SESSION_ID_KEY, session.sessionId);
@@ -454,6 +473,7 @@ export async function diagClear(sessionId: string): Promise<void> {
     await AsyncStorage.removeItem(key);
     delete lastPersistTime[sessionId];
     delete pendingEvents[sessionId];
+    delete lastPersistedCounters[sessionId];
   } catch (error) {
     if (__DEV__) {
       console.warn('[alarmDiagnostics] diagClear failed:', error);
@@ -473,6 +493,7 @@ export async function diagClearAll(): Promise<void> {
     await AsyncStorage.removeItem(LAST_SESSION_ID_KEY);
     lastPersistTime = {};
     pendingEvents = {};
+    lastPersistedCounters = {};
   } catch (error) {
     if (__DEV__) {
       console.warn('[alarmDiagnostics] diagClearAll failed:', error);
