@@ -1,17 +1,43 @@
 # Local APK Build Script
-# Bu script local'de release APK build eder
+# Bu script local'de release APK build eder.
+# API key'ler ortam degiskenlerinden veya .env dosyasindan okunur; repo'da SAKLANMAZ.
 
-Write-Host "Local APK Build başlatılıyor..." -ForegroundColor Cyan
+$ErrorActionPreference = "Stop"
+$rootDir = $PSScriptRoot\..
 
-# Environment variables set et
-$env:EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID = "AIzaSyAVU7hqKkF7p3yHIFn_ykwJG2PTTIMyg2g"
-$env:EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS = "AIzaSyDsm7bYfryNWjJppXCYGHGvYBhFjcMXR0w"
-$env:EXPO_PUBLIC_GOOGLE_MAPS_API_KEY = "AIzaSyALEHjwVi3HGBYVQvWFHSYOYJTLefczc9A"
-$env:EXPO_PUBLIC_ENVIRONMENT = "staging"
+Write-Host "Local APK Build baslatiliyor..." -ForegroundColor Cyan
 
-Write-Host "`nEnvironment variables set edildi:" -ForegroundColor Green
-Write-Host "  EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID: $($env:EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID.Substring(0, 20))..." -ForegroundColor Gray
-Write-Host "  EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS: $($env:EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS.Substring(0, 20))..." -ForegroundColor Gray
+# .env varsa yukle (key'leri scripte yazmayin)
+$envPath = Join-Path $rootDir ".env"
+if (Test-Path $envPath) {
+    Get-Content $envPath | ForEach-Object {
+        if ($_ -match '^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+)\s*$') {
+            [Environment]::SetEnvironmentVariable($matches[1], $matches[2].Trim().Trim('"').Trim("'"), "Process")
+        }
+    }
+}
+
+$required = @("EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID", "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS")
+$missing = @()
+foreach ($n in $required) {
+    $v = [Environment]::GetEnvironmentVariable($n, "Process")
+    if (-not $v) { $v = [Environment]::GetEnvironmentVariable($n, "User") }
+    if (-not $v) { $v = [Environment]::GetEnvironmentVariable($n, "Machine") }
+    if (-not $v) { $missing += $n }
+}
+if ($missing.Count -gt 0) {
+    Write-Host "`nHATA: Asagidaki ortam degiskenleri veya .env key'leri eksik:" -ForegroundColor Red
+    $missing | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
+    Write-Host "`n.env ornegi: env.sample dosyasina bakin; .env olusturup degerleri doldurun. Repo'da API key SAKLAMAYIN.`n" -ForegroundColor Yellow
+    exit 1
+}
+
+if (-not $env:EXPO_PUBLIC_ENVIRONMENT) { $env:EXPO_PUBLIC_ENVIRONMENT = "staging" }
+if (-not $env:EXPO_PUBLIC_GOOGLE_MAPS_API_KEY) { $env:EXPO_PUBLIC_GOOGLE_MAPS_API_KEY = $env:EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID }
+
+Write-Host "`nEnvironment variables kullaniliyor (.env veya ortam degiskenleri):" -ForegroundColor Green
+Write-Host "  EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID: $($env:EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID.Substring(0, [Math]::Min(20, $env:EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID.Length)))..." -ForegroundColor Gray
+Write-Host "  EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS: $($env:EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS.Substring(0, [Math]::Min(20, $env:EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS.Length)))..." -ForegroundColor Gray
 Write-Host "  EXPO_PUBLIC_ENVIRONMENT: $env:EXPO_PUBLIC_ENVIRONMENT" -ForegroundColor Gray
 
 # Prebuild çalıştır (clean olmadan - android klasörü kilitli olabilir)
