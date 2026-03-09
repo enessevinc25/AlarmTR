@@ -38,6 +38,7 @@ GitHub Pages aktifleştirildikten sonra, dokümanlarınız şu URL'lerde yayınl
 **Örnek URL'ler**:
 - Privacy Policy: `https://[username].github.io/[repository-name]/privacy-policy.html`
 - Terms of Service: `https://[username].github.io/[repository-name]/terms-of-service.html`
+- Hesap Silme (Google Play): `https://[username].github.io/[repository-name]/account-deletion.html`
 
 **Not**: İlk yayınlama 1-2 dakika sürebilir. URL'ler hazır olduğunda GitHub size bildirim gönderecektir.
 
@@ -87,6 +88,12 @@ const termsUrl = 'https://[username].github.io/[repository-name]/terms-of-servic
 
 - `docs/privacy-policy.html` - Gizlilik Politikası HTML dosyası
 - `docs/terms-of-service.html` - Kullanım Şartları HTML dosyası
+- `docs/account-deletion.html` - Hesap Silme rehberi (Google Play Data Safety URL)
+- `docs/account-deletion/` - Hesap silme ekran görüntüleri (01–04)
 - `docs/index.html` - Ana sayfa (opsiyonel)
 - `src/screens/settings/SettingsHomeScreen.tsx` - Settings ekranı (URL'ler burada güncellenmeli)
+
+### Hesap Silme sayfası için ekran görüntüleri
+
+`docs/account-deletion/` klasörüne 4 ekran görüntüsü ekleyin (isimler `docs/account-deletion/README.md` içinde).
 
